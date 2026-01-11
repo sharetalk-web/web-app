@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>sharetalk/search</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system;background:#f0f2f5;padding:20px}
+.search-container{display:flex;max-width:90%;height:10vw;margin-bottom:20px}
+#search{flex:1;padding:10px 14px;border-radius:8px 0 0 8px;border:1px solid #ccc;outline:none;font-size:30px;font-weight:900}
+#searchBtn{padding:10px 50px;border:none;border-radius:0 8px 8px 0;background:#1877f2;color:white;font-size:30px;font-weight:900}
+#results{max-width:90%}
+.user{display:flex;align-items:center;gap:12px;padding:15px;border-radius:10px;background:white;margin-bottom:10px;cursor:pointer;border:2px solid transparent;transition:all 0.2s ease}
+.user:hover{background:#f5f5f5;border-color:#1877F2;transform:translateY(-2px);box-shadow:0 3px 10px rgba(0,0,0,0.1)}
+.user img{width:30vw;height:30vw;border-radius:50%;object-fit:cover; border: 7px solid #007bff;}
+.user span{font-weight:900;font-size:60px;text-transform:capitalize}
+.default-avatar{width:60px;height:60px;border-radius:50%;background:#1877f2;color:white;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900}
+.bk{border-radius:50%;background:#ddd;border:none;height:10vw;width:10vw;font-size:40px;font-weight:900}
+.sep{border-bottom:6px solid hotpink}
+.no-results{padding:40px;text-align:center;color:#666;font-size:20px}
+.loading{text-align:center;padding:30px;color:#666}
+.loading-spinner{display:inline-block;width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid #1877f2;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:10px}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.friend-status{font-size:14px;color:#42b72a;margin-left:auto;padding:5px 10px;background:#e9f7e7;border-radius:15px;font-weight:bold}
+</style>
+</head>
+<body>
+
+<a href="home.html"><button class="bk"><</button></a>
+<p><br><br><div class="sep"></div><br><br>
+
+<div class="search-container">
+  <input id="search" placeholder="Search People...">
+  <button id="searchBtn">Search</button>
+</div>
+
+<div id="results"></div>
+
+<script>
+const API = "https://api.github.com";
+const token = "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";
+const owner = "authorization-tech";
+
+async function api(path){
+  const r = await fetch(API + path, {
+    headers:{ Authorization:"token " + token }
+  });
+  if(!r.ok) throw new Error();
+  return r.json();
+}
+
+function base64ToBlob(base64, type){
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for(let i=0;i<bytes.length;i++) arr[i]=bytes.charCodeAt(i);
+  return new Blob([arr], { type });
+}
+
+const imageNames = [
+  "profile.jpg",
+  "profile.png",
+  "profile.jpeg",
+  "profile.webp"
+];
+
+const searchInput = document.getElementById("search");
+const searchBtn = document.getElementById("searchBtn");
+const results = document.getElementById("results");
+let currentUser = localStorage.getItem("authUser");
+let currentUserRepo = localStorage.getItem("authRepo");
+
+function showLoading() {
+  results.innerHTML = `
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <div>Searching users...</div>
+    </div>
+  `;
+}
+
+function showNoResults() {
+  results.innerHTML = `
+    <div class="no-results">
+      No users found
+    </div>
+  `;
+}
+
+async function loadAvatar(repo, name, container){
+  for(const file of imageNames){
+    try{
+      const imgData = await api(`/repos/${owner}/${repo}/contents/${file}`);
+      const blob = base64ToBlob(imgData.content, "image/*");
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(blob);
+      container.prepend(img);
+      return;
+    }catch{}
+  }
+
+  const fallback = document.createElement("div");
+  fallback.className = "default-avatar";
+  fallback.textContent = name[0].toUpperCase();
+  container.prepend(fallback);
+}
+
+// Check if a user is in current user's friends list
+async function checkIfFriend(targetUsername) {
+  if (!currentUser || !currentUserRepo) return false;
+  
+  try {
+    // Get current user's friends list
+    const friendsRes = await api(`/repos/${owner}/${currentUserRepo}/contents/friends.txt`);
+    const friendsData = atob(friendsRes.content);
+    const friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+    
+    return friends.includes(targetUsername);
+  } catch (e) {
+    return false; // No friends file or error
+  }
+}
+
+// Get friend status for display
+async function getFriendStatus(targetUsername) {
+  if (!currentUser) return null;
+  
+  if (currentUser === targetUsername) {
+    return "You";
+  }
+  
+  const isFriend = await checkIfFriend(targetUsername);
+  return isFriend ? "Friend" : null;
+}
+
+async function performSearch(){
+  const q = searchInput.value.trim().toLowerCase();
+  results.innerHTML = "";
+  
+  if(!q) return;
+  
+  showLoading();
+  
+  try{
+    const repos = await api("/user/repos?per_page=100");
+    const foundUsers = [];
+    
+    for(const r of repos){
+      if(!/^user\d+$/.test(r.name)) continue;
+
+      try{
+        const u = await api(`/repos/${owner}/${r.name}/contents/username.txt`);
+        const name = atob(u.content).trim();
+
+        if(!name.toLowerCase().includes(q)) continue;
+
+        foundUsers.push({ repo: r.name, name: name });
+      }catch{}
+    }
+    
+    results.innerHTML = "";
+    
+    if(foundUsers.length === 0){
+      showNoResults();
+      return;
+    }
+    
+    // Load friend status for all users
+    const usersWithStatus = await Promise.all(
+      foundUsers.map(async (user) => ({
+        ...user,
+        status: await getFriendStatus(user.name)
+      }))
+    );
+    
+    for(const user of usersWithStatus){
+      const div = document.createElement("div");
+      div.className = "user";
+
+      const span = document.createElement("span");
+      span.textContent = user.name;
+
+      div.appendChild(span);
+      
+      // Add friend status badge if applicable
+      if (user.status) {
+        const statusBadge = document.createElement("div");
+        statusBadge.className = "friend-status";
+        statusBadge.textContent = user.status;
+        div.appendChild(statusBadge);
+      }
+      
+      results.appendChild(div);
+
+      await loadAvatar(user.repo, user.name, div);
+
+      // Open view profile when clicked
+      div.onclick = () => {
+        localStorage.setItem("viewUser", user.name);
+        localStorage.setItem("viewRepo", user.repo);
+        window.location.href = "view.html";
+      };
+    }
+    
+  }catch(error){
+    results.innerHTML = `
+      <div class="no-results">
+        Error searching users
+      </div>
+    `;
+    console.error(error);
+  }
+}
+
+searchBtn.onclick = performSearch;
+
+searchInput.oninput = ()=>{
+  clearTimeout(window.searchTimer);
+  window.searchTimer = setTimeout(performSearch, 400);
+};
+
+// Search on Enter key
+searchInput.addEventListener("keypress", (e) => {
+  if(e.key === "Enter") {
+    performSearch();
+  }
+});
+
+// Load current user info on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (!currentUser || !currentUserRepo) {
+    // If not logged in, redirect to login
+    window.location.href = "index.html";
+  }
+});
+</script>
+</body>
+</html>
