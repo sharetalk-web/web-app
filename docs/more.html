@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>sharetalk/more</title>
+  <style>
+  body {
+   margin: 0;
+    padding: 0;
+   font-family: Arial, sans-serif;
+  }
+  .tag {
+    color: #007bff;
+    font-weight: 900;
+    font-size: 60px;
+  }
+  .bck {
+    height: 8vh;
+  width: 8vh;
+    margin-top: 2%;
+    margin-left: 2%;
+  font-size: 60px;
+  background: #ddd;
+  border-radius: 50%;
+  border: none;
+  font-weight: 900;
+  }
+  .divider {
+    border-bottom: 4px solid black;
+  }
+#signOutBtn{
+  padding:12px 20px;
+  border:none;
+  border-radius:10px;
+  background:#ed4956;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+#signOutBtn:hover{opacity:.9}
+  </style>
+</head>
+<body> 
+  <a href="index.html" target="_blank">
+   <button class="bck"><</button><p>
+</a>
+  <center class="tag">More</center>
+     <div class="divider"></div><p><br>
+      <button id="signOutBtn">Sign Out</button>
+      <script>
+/* Redirect if not logged in */
+if(!localStorage.getItem("authUser")){
+  location.href = "cauth.html";
+}
+
+/* Sign out */
+document.getElementById("signOutBtn").onclick = () => {
+  localStorage.removeItem("authUser");
+  location.href = "cauth.html";
+};
+</script>
+</body>
+</html>
