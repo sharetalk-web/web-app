@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>sharetalk/home</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav id="navbar" class="navbar">
+  <div class="app-bar">
+    <div class="top-logos">
+      <span class="title">sharetalk</span>
+      <button class="search" id="search">&#x2315</button>
+      <a href="more.html" target="_blank">
+        <button class="more">☰</button>
+      </a>
+    </div>
+  </div>
+
+  <nav class="sec-nav">
+    <div class="home-icon"></div>
+
+    <div class="badge" id="badge">
+  <!-- Bell icon -->
+  <svg viewBox="0 0 24 24">
+    <path d="M12 3c-3 0-5 2.5-5 5.5v2.2c0 .7-.3 1.4-.8 1.9l-1.2 1.2c-.5.5-.2 1.2.5 1.2h15c.7 0 1-.8.5-1.2l-1.2-1.2c-.5-.5-.8-1.2-.8-1.9V8.5C17 5.5 15 3 12 3z"/>
+    <path d="M9.5 18c.5 1.2 1.7 2 3 2s2.5-.8 3-2" stroke-linecap="round"/>
+  </svg>
+  <!-- Notification count -->
+</div>
+
+    <button class="add" id="add">+</button>
+
+    <div class="friends-icon">
+      <div></div><div></div><div></div><div></div>
+    </div>
+
+    <div class="profile-icon" id="profile">
+      <div></div><div></div>
+    </div>
+  </nav>
+</nav>
+
+<main class="content">
+  <center class="see">Enjoy sharetalk...</center>
+
+  <!-- HOME FEED -->
+  <div id="feed"></div>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
