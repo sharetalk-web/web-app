@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>sharetalk/auth</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  font-family: system-ui,-apple-system;
+  background: #f0f2f5;
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:16px;
+  width:100%;
+  max-width:400px;
+  box-shadow:0 10px 25px rgba(0,0,0,.2);
+}
+h2{text-align:center;margin-bottom:20px;}
+input,button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+button{
+  cursor:pointer;
+  border:none;
+  color:white;
+  font-weight:600;
+}
+button.login{background:#1877f2;}
+pre{
+  background:#eee;
+  padding:10px;
+  border-radius:8px;
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Login</h2>
+  <input id="liUsername" placeholder="Username">
+  <input id="liPassword" type="password" placeholder="Password">
+  <button class="login" onclick="logIn()">Login</button>
+  <pre id="log"></pre><p><br>
+     This re-login is for extra privacy.
+</div>
+<script>
+const API="https://api.github.com";
+const token="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"; // <-- CHANGE
+const githubUsername="authorization-tech"; // <-- CHANGE
+const log = m => document.getElementById("log").textContent = typeof m==='string'?m:JSON.stringify(m,null,2);
+
+// AUTO REDIRECT IF USER ALREADY SIGNED IN
+window.onload = () => {
+  const u = localStorage.getItem("authUser");
+  const r = localStorage.getItem("authRepo");
+  if(u && r) location.href="chat.html";
+};
+
+// FETCH WRAPPER
+async function api(path, method="GET", body){
+  const res = await fetch(API+path,{
+    method,
+    headers:{
+      Authorization:"token "+token,
+      Accept:"application/vnd.github+json",
+      "Content-Type":"application/json"
+    },
+    body: body?JSON.stringify(body):null
+  });
+  const data = await res.json();
+  if(!res.ok) throw data;
+  return data;
+}
+
+// LOGIN
+async function logIn(){
+  const u=document.getElementById("liUsername").value.trim();
+  const p=document.getElementById("liPassword").value.trim();
+  if(!u||!p) return log("Username & password required");
+
+  try{
+    const repos = await api("/user/repos?per_page=100");
+    for(const r of repos){
+      if(!/^user\d+$/.test(r.name)) continue;
+      try{
+        const uf = await api(`/repos/${githubUsername}/${r.name}/contents/username.txt`);
+        const pf = await api(`/repos/${githubUsername}/${r.name}/contents/password.txt`);
+        if(atob(uf.content)===u && atob(pf.content)===p){
+          localStorage.setItem("authUser",u);
+          localStorage.setItem("authRepo",r.name);
+          location.href="chat.html";
+          return;
+        }
+      }catch{}
+    }
+    log("Invalid credentials");
+  }catch(e){log(e)}
+}
+</script>
+</body>
+</html>
