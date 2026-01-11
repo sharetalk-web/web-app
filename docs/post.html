@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sharetalk/post/upload</title>
+<style>
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .upload-container {
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    width: 360px;
+    text-align: center;
+  }
+
+  h2 {
+    margin-bottom: 20px;
+  }
+
+  .custom-file-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: hotpink;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 15px;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+
+  button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    background: hotpink;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    background: gray;
+    cursor: not-allowed;
+  }
+
+  #previewContainer {
+    margin-top: 15px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+
+  #previewContainer img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    object-fit: contain;
+    display: block;
+  }
+
+  #removeBtn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: rgba(255,0,0,0.9);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 25px;
+    height: 40px;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    line-height: 10px;
+  }
+
+  #progressBar {
+    width: 100%;
+    background: #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 10px;
+    display: none;
+  }
+
+  #progressBar div {
+    height: 10px;
+    width: 0;
+    background: hotpink;
+  }
+  .ex {
+   border: none;
+    font-weight: 900;
+    height: 10vw;
+    width: 10vw;
+    border-radius: 50%;
+    border: 0.5px solid blue;
+    color: black;
+    font-size: 20px;
+    background: #eee;
+  }
+</style>
+</head>
+<body>
+
+<div class="upload-container">
+  <a href="option.html">
+    <button class="ex"><</button>
+  </a><p><br>
+  <h2>Upload Post</h2>
+  <form id="uploadForm">
+    <label class="custom-file-btn" for="imageFile">Choose Image</label>
+    <input type="file" id="imageFile" accept="image/*" required>
+    <input type="text" id="caption" placeholder="Enter caption" required>
+
+    <div id="previewContainer"></div>
+
+    <button type="submit">Upload</button>
+    <div id="progressBar"><div></div></div>
+  </form>
+    <p style="color: black;">Your File must be under 50MB size each
+    otherwise it will not get uploaded. Your Post will display on the platform within 1 week after your upload.
+  </p>
+</div>
+
+<script>
+const form = document.getElementById('uploadForm');
+const fileInput = document.getElementById('imageFile');
+const captionInput = document.getElementById('caption');
+const previewContainer = document.getElementById('previewContainer');
+const progressBar = document.getElementById('progressBar');
+const progress = progressBar.querySelector('div');
+
+const TELEGRAM_BOT_TOKEN = '8280799580:AAHgfc1uzQD8dvn4wFsP2fd-cR3NH7r4fPI';
+const CHAT_ID = '8340525525';
+const MAX_SIZE_MB = 50;
+
+// Show image preview
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  previewContainer.innerHTML = '';
+
+  if (!file) return;
+
+  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    alert(`File size should not exceed ${MAX_SIZE_MB} MB`);
+    fileInput.value = '';
+    return;
+  }
+
+  const imgWrapper = document.createElement('div');
+  imgWrapper.style.position = 'relative';
+  imgWrapper.style.display = 'inline-block';
+
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(file);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.id = 'removeBtn';
+  removeBtn.innerHTML = '&times;';
+  removeBtn.addEventListener('click', () => {
+    fileInput.value = '';
+    previewContainer.innerHTML = '';
+  });
+
+  imgWrapper.appendChild(img);
+  imgWrapper.appendChild(removeBtn);
+  previewContainer.appendChild(imgWrapper);
+});
+
+// Upload form
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const file = fileInput.files[0];
+  const caption = captionInput.value.trim();
+
+  if (!file) {
+    alert('Please select an image!');
+    return;
+  }
+
+  if (!caption) {
+    alert('Caption is required!');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('photo', file);
+  formData.append('caption', caption);
+  formData.append('chat_id', CHAT_ID);
+
+  progressBar.style.display = 'block';
+  progress.style.width = '0%';
+  form.querySelector('button[type="submit"]').disabled = true;
+
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = (event.loaded / event.total) * 100;
+        progress.style.width = percent + '%';
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        alert('Image uploaded successfully!');
+        form.reset();
+        previewContainer.innerHTML = '';
+        progress.style.width = '0%';
+        progressBar.style.display = 'none';
+      } else {
+        alert('Upload failed! ' + xhr.responseText);
+      }
+      form.querySelector('button[type="submit"]').disabled = false;
+    };
+
+    xhr.send(formData);
+  } catch (err) {
+    alert('Error: ' + err.message);
+    form.querySelector('button[type="submit"]').disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
