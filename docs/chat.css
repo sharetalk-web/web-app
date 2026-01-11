@@ -1,0 +1,549 @@
+/* Mobile First Design */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f0f2f5;
+  height: auto;
+  font-size: 14px;
+  padding-top: 160px;
+}
+
+.head {
+  width: 100%;
+  height: auto;
+  border-bottom: 2px solid #25d366;
+  position: fixed;
+  background: white;
+  font-weight: 700;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  padding: 10px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Logo/Title */
+.tag {
+  font-weight: 900;
+  color: #25d366;
+  margin-left: 15px;
+  font-size: 24px;
+  line-height: 30px;
+  display: block;
+  text-align: left;
+}
+
+/* Search Section */
+.flex-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+  width: 95%;
+  max-width: 500px;
+}
+
+#filter {
+  width: 85%;
+  font-weight: 700;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  height: 45px;
+  text-align: left;
+  padding: 0 15px;
+  border-radius: 25px;
+  background: white;
+  margin-bottom: 15px;
+  outline: none;
+}
+
+#filter:focus {
+  border-color: #25d366;
+}
+
+/* Buttons */
+.clear {
+  width: 45px;
+  height: 45px;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  border-radius: 50%;
+  margin-left: 10px;
+  border: none;
+  background: #ff4444;
+  margin-bottom: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  margin-bottom: 10px;
+}
+
+.tak, #tal {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-weight: 700;
+  border: none;
+  background: #f0f0f0;
+  color: #25d366;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Tabs */
+.tabs {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 10px;
+}
+
+.tab {
+  background: white;
+  text-align: center;
+  font-weight: 700;
+  width: 100px;
+  font-size: 14px;
+  border: 1.5px solid #25d366;
+  border-radius: 25px;
+  height: 35px;
+  line-height: 35px;
+  cursor: pointer;
+  padding: 0 10px;
+  flex: 1;
+  max-width: 120px;
+  transition: all 0.3s;
+}
+
+/* Hover Effects */
+.clear:hover {
+  background: #e53935;
+}
+
+.tab:hover, .tab.active {
+  background: #25d366;
+  color: white;
+}
+
+.tak:hover, #tal:hover {
+  background: #25d366;
+  color: white;
+}
+
+/* Trustees List */
+#friendsContainer {
+  padding: 20px;
+  margin-top: 120px;
+  margin-bottom: 80px;
+}
+
+.friend-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border-radius: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.friend-item:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.friend-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 15px;
+  border: 3px solid #25d366;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+}
+
+.friend-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.friend-avatar-default {
+  width: 100%;
+  height: 100%;
+  background: #25d366;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 900;
+  border-radius: 50%;
+}
+
+.friend-info {
+  flex: 1;
+}
+
+.friend-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.friend-last-message {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.friend-time {
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.friend-status {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.online-dot {
+  width: 12px;
+  height: 12px;
+  background: #25d366;
+  border-radius: 50%;
+  margin-bottom: 5px;
+}
+
+.unread-count {
+  background: #25d366;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 50px 20px;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f0;
+  border-top: 4px solid #25d366;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* No Trustees */
+.no-trustees {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.no-trustees-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.no-trustees h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.no-trustees p {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.add-friends-btn {
+  background: #25d366;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s;
+}
+
+.add-friends-btn:hover {
+  background: #1da851;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 280px;
+  height: 100%;
+  background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+  box-shadow: -3px 0 15px rgba(0,0,0,0.3);
+  transition: right 0.3s ease;
+  z-index: 1002;
+  padding: 20px;
+}
+
+.sidebar.active {
+  right: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #25d366;
+  padding-bottom: 15px;
+}
+
+.sidebar-title {
+  margin: 0;
+  color: #25d366;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.close-sidebar {
+  background: #ff4444;
+  border: none;
+  font-size: 32px;
+  color: white;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.close-sidebar:hover {
+  background: #e53935;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.sidebar-btn {
+  padding: 18px 15px;
+  background: white;
+  border: 2px solid #25d366;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #25d366;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-btn i {
+  font-size: 20px;
+}
+
+.sidebar-btn:hover {
+  background: #25d366;
+  color: white;
+  transform: translateX(5px);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1001;
+  display: none;
+}
+
+.overlay.active {
+  display: block;
+}
+
+.h {
+  background: #25d366;
+  color: white;
+  margin-left: 20px;
+  font-weight: 900;
+  font-size: 16px;
+  height: 5.5vh;
+  min-width: 100px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.h:hover {
+  background: #1da851;
+}
+
+.not {
+  margin-top: 35%;
+  font-size: 20px;
+  font-weight: 900;
+  color: #25d366;
+}
+
+/* Tablet and Desktop */
+@media (min-width: 768px) {
+  body {
+    padding-top: 180px;
+    font-size: 16px;
+  }
+  
+  .tag {
+    font-size: 28px;
+    line-height: 40px;
+  }
+  
+  #filter {
+    height: 50px;
+    font-size: 18px;
+  }
+  
+  .tak, #tal {
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+  }
+  
+  .clear {
+    width: 50px;
+    height: 50px;
+    font-size: 32px;
+  }
+  
+  .tab {
+    width: 120px;
+    height: 40px;
+    line-height: 40px;
+    font-size: 16px;
+  }
+  
+  .friend-item {
+    padding: 20px;
+  }
+  
+  .friend-avatar {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .friend-name {
+    font-size: 20px;
+  }
+  
+  .sidebar {
+    width: 350px;
+  }
+  
+  .sidebar-title {
+    font-size: 32px;
+  }
+  
+  .sidebar-btn {
+    font-size: 18px;
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    padding-top: 200px;
+  }
+  
+  .tag {
+    font-size: 36px;
+  }
+  
+  #filter {
+    height: 55px;
+    font-size: 20px;
+  }
+  
+  .tak, #tal {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .clear {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .tab {
+    width: 140px;
+    font-size: 18px;
+  }
+}
