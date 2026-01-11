@@ -1,0 +1,260 @@
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<title>sharetalk/auth</title>  
+<meta name="viewport" content="width=device-width, initial-scale=1">  
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>  
+<style>  
+body{  
+  font-family: system-ui,-apple-system;  
+  background: #f0f2f5;  
+  display:flex;  
+  justify-content:center;  
+  padding:20px;  
+}  
+.card{  
+  background:#fff;  
+  padding:20px;  
+  border-radius:16px;  
+  width:100%;  
+  max-width:400px;  
+  box-shadow:0 10px 25px rgba(0,0,0,.2);  
+}  
+h2{text-align:center;margin-bottom:20px;}  
+input,button{  
+  width:100%;  
+  padding:10px;  
+  margin-top:10px;  
+  border-radius:8px;  
+  border:1px solid #ccc;  
+  font-size:14px;  
+}  
+button{  
+  cursor:pointer;  
+  border:none;  
+  color:white;  
+  font-weight:600;  
+}  
+button.signup{background:#238636;}  
+button.login{background:#1877f2;}  
+#avatarPreview{  
+  width:120px;  
+  height:120px;  
+  border-radius:50%;  /* circle mask */  
+  object-fit:cover;  
+  display:block;  
+  margin:10px auto;  
+  border:2px solid #1f6feb;  
+}  
+.tab-btns{  
+  display:flex;  
+  gap:10px;  
+  margin-bottom:10px;  
+}  
+.tab-btns button{  
+  flex:1;  
+  background:#ddd;  
+  color:black;  
+  font-weight:500;  
+}  
+.tab-btns button.active{  
+  background:#1f6feb;color:white;  
+}  
+#choosePicBtn{  
+  background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);  
+  color:white;  
+  font-weight:600;  
+  border:none;  
+  cursor:pointer;  
+  transition:0.3s;  
+}  
+#choosePicBtn:hover{  
+  opacity:0.85;  
+}  
+pre{  
+  background:#eee;  
+  padding:10px;  
+  border-radius:8px;  
+  margin-top:10px;  
+}  
+</style>  
+</head>  
+<body>  <div class="card">  
+  <div class="tab-btns">  
+    <button id="tabSignup" class="active">Sign Up</button>  
+    <button id="tabLogin">Login</button>  
+  </div>    <!-- SIGNUP FORM -->    <div id="signupForm">  
+    <h2>Sign Up</h2>  
+    <input id="suUsername" placeholder="Username">  
+    <input id="suPassword" type="password" placeholder="Password">  <!-- Hidden file input -->  
+<input type="file" id="profilePicInput" accept="image/*" style="display:none">  
+
+<!-- Custom choose file button -->  
+<button type="button" id="choosePicBtn">Choose Profile Picture</button>  
+
+<!-- Circle preview -->  
+<canvas id="avatarPreview"></canvas>  
+
+<!-- Hidden image for cropper -->  
+<img id="cropImg" style="display:none">  
+
+<button class="signup" onclick="signUp()">Sign Up</button>
+
+  </div>    <!-- LOGIN FORM -->    <div id="loginForm" style="display:none">  
+    <h2>Login</h2>  
+    <input id="liUsername" placeholder="Username">  
+    <input id="liPassword" type="password" placeholder="Password">  
+    <button class="login" onclick="logIn()">Login</button>  
+  </div>    <pre id="log"></pre>  </div>  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>  <script>  
+const API="https://api.github.com";  
+const token="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"; // <-- CHANGE  
+const githubUsername="authorization-tech"; // <-- CHANGE  
+const log = m => document.getElementById("log").textContent = typeof m==='string'?m:JSON.stringify(m,null,2);  
+  
+// AUTO REDIRECT IF USER ALREADY SIGNED IN  
+window.onload = () => {  
+  const u = localStorage.getItem("authUser");  
+  const r = localStorage.getItem("authRepo");  
+  if(u && r) location.href="home.html";  
+};  
+  
+// FETCH WRAPPER  
+async function api(path, method="GET", body){  
+  const res = await fetch(API+path,{  
+    method,  
+    headers:{  
+      Authorization:"token "+token,  
+      Accept:"application/vnd.github+json",  
+      "Content-Type":"application/json"  
+    },  
+    body: body?JSON.stringify(body):null  
+  });  
+  const data = await res.json();  
+  if(!res.ok) throw data;  
+  return data;  
+}  
+  
+// TAB SWITCH  
+const tabSignup=document.getElementById("tabSignup");  
+const tabLogin=document.getElementById("tabLogin");  
+const signupForm=document.getElementById("signupForm");  
+const loginForm=document.getElementById("loginForm");  
+tabSignup.onclick=()=>{signupForm.style.display="block"; loginForm.style.display="none"; tabSignup.classList.add("active"); tabLogin.classList.remove("active");};  
+tabLogin.onclick=()=>{signupForm.style.display="none"; loginForm.style.display="block"; tabLogin.classList.add("active"); tabSignup.classList.remove("active");};  
+  
+// CROP & PREVIEW  
+let cropper;  
+const profileInput=document.getElementById("profilePicInput");  
+const choosePicBtn=document.getElementById("choosePicBtn");  
+const avatarCanvas=document.getElementById("avatarPreview");  
+const ctx = avatarCanvas.getContext("2d");  
+const cropImg=document.getElementById("cropImg");  
+  
+choosePicBtn.onclick = ()=> profileInput.click();  
+  
+profileInput.onchange = e=>{  
+  const file = e.target.files[0];  
+  if(!file) return;  
+  const url = URL.createObjectURL(file);  
+  cropImg.src = url;  
+  cropImg.onload = ()=>{  
+    if(cropper) cropper.destroy();  
+    cropper = new Cropper(cropImg,{  
+      aspectRatio:1,  
+      viewMode:1,  
+      autoCropArea:1,  
+      cropBoxResizable:true,  
+      ready(){ updateCanvasPreview(); },  
+      crop(){ updateCanvasPreview(); }  
+    });  
+  };  
+};  
+  
+function updateCanvasPreview(){  
+  if(!cropper) return;  
+  const cropped = cropper.getCroppedCanvas({width:200,height:200});  
+  avatarCanvas.width = 120;  
+  avatarCanvas.height = 120;  
+  ctx.clearRect(0,0,120,120);  
+  ctx.save();  
+  ctx.beginPath();  
+  ctx.arc(60,60,60,0,Math.PI*2);  
+  ctx.closePath();  
+  ctx.clip();  
+  ctx.drawImage(cropped,0,0,120,120);  
+  ctx.restore();  
+}  
+  
+// Compress and get Blob  
+function cropAndCompress(){  
+  return new Promise((resolve)=>{  
+    cropper.getCroppedCanvas({width:200,height:200}).toBlob(b=>{  
+      if(b.size>1024*1024){  
+        cropper.getCroppedCanvas({width:150,height:150}).toBlob(bb=>resolve(bb),"image/jpeg",0.7);  
+      } else resolve(b);  
+    },"image/jpeg",0.8);  
+  });  
+}  
+  
+// SIGNUP  
+async function signUp(){  
+  const u=document.getElementById("suUsername").value.trim();  
+  const p=document.getElementById("suPassword").value.trim();  
+  if(!u||!p) return log("Username & password required");  
+  if(!cropper) return log("Please select and crop profile picture");  
+  
+  try{  
+    // next userX repo  
+    const repos=await api("/user/repos?per_page=100");  
+    const nums=repos.map(r=>r.name).filter(n=>/^user\d+$/.test(n)).map(n=>+n.replace("user",""));  
+    const next = nums.length ? Math.max(...nums)+1 : 1;  
+    const repoName="user"+next;  
+  
+    // create repo  
+    await api("/user/repos","POST",{name:repoName,private:true});  
+  
+    // create username/password  
+    await api(`/repos/${githubUsername}/${repoName}/contents/username.txt`,"PUT",{message:"username",content:btoa(u)});  
+    await api(`/repos/${githubUsername}/${repoName}/contents/password.txt`,"PUT",{message:"password",content:btoa(p)});  
+  
+    // upload profile pic  
+    const blob = await cropAndCompress();  
+    const reader = new FileReader();  
+    reader.onload = async e=>{  
+      const base64 = e.target.result.split(",")[1];  
+      await api(`/repos/${githubUsername}/${repoName}/contents/profile.jpg`,"PUT",{message:"profile pic",content:base64});  
+      localStorage.setItem("authUser",u);  
+      localStorage.setItem("authRepo",repoName);  
+      location.href="home.html";  
+    };  
+    reader.readAsDataURL(blob);  
+  
+  }catch(e){ log(e) }  
+}  
+  
+// LOGIN  
+async function logIn(){  
+  const u=document.getElementById("liUsername").value.trim();  
+  const p=document.getElementById("liPassword").value.trim();  
+  if(!u||!p) return log("Username & password required");  
+  
+  try{  
+    const repos = await api("/user/repos?per_page=100");  
+    for(const r of repos){  
+      if(!/^user\d+$/.test(r.name)) continue;  
+      try{  
+        const uf = await api(`/repos/${githubUsername}/${r.name}/contents/username.txt`);  
+        const pf = await api(`/repos/${githubUsername}/${r.name}/contents/password.txt`);  
+        if(atob(uf.content)===u && atob(pf.content)===p){  
+          localStorage.setItem("authUser",u);  
+          localStorage.setItem("authRepo",r.name);  
+          location.href="home.html";  
+          return;  
+        }  
+      }catch{}  
+    }  
+    log("Invalid credentials");  
+  }catch(e){log(e)}  
+}  
+</script>  </body>  
+</html> 
