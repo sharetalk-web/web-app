@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>sharetalk/upload/superpost</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  font-family: system-ui,-apple-system;
+  background:#f2f2f2;
+  padding:20px;
+}
+.box{
+  max-width:420px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 6px 25px rgba(0,0,0,.12);
+}
+h2{
+  text-align:center;
+  margin-top:0;
+}
+
+.choose-btn{
+  background:#444;
+  color:#fff;
+  padding:12px;
+  border-radius:8px;
+  text-align:center;
+  cursor:pointer;
+  margin-bottom:10px;
+}
+input[type=file]{display:none}
+
+/* Preview Grid */
+.preview{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:10px;
+}
+  .ex {
+   border: none;
+    font-weight: 900;
+    height: 10vw;
+    width: 10vw;
+    color: black;
+    border-radius: 50%;
+    border: 0.5px solid blue;
+    font-size: 20px;
+    background: #eee;
+  }
+.preview-item{
+  position:relative;
+}
+.preview-item img,
+.preview-item video{
+  width:100%;
+  height:90px;
+  object-fit:cover;
+  border-radius:8px;
+  margin-top: 10px;
+  display:block;
+}
+.file-info{
+  font-size:12px;
+  text-align:center;
+  margin-top:4px;
+}
+
+/* Remove button */
+.remove-btn{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#ff3b30;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:14px;
+  line-height:1;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  background:#0088cc;
+  color:#fff;
+  font-size:16px;
+  border-radius:8px;
+  cursor:pointer;
+  margin-top:15px;
+}
+button:disabled{background:#aaa}
+
+.progress{
+  width:100%;
+  height:8px;
+  background:#ddd;
+  border-radius:5px;
+  overflow:hidden;
+  margin-top:15px;
+  display:none;
+}
+.progress div{
+  width:0%;
+  height:100%;
+  background:#00b894;
+}
+
+.status{
+  margin-top:12px;
+  text-align:center;
+  font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <a href="option.html">
+    <button class="ex"><</button>
+  </a><p><br>
+  <h2>Upload Super Post</h2>
+
+  <label class="choose-btn" for="fileInput">Choose Images/Videos</label>
+  <input type="file" id="fileInput" multiple>
+
+  <div class="preview" id="preview"></div>
+
+  <div class="progress" id="progress"><div></div></div>
+
+  <button id="uploadBtn">Upload</button>
+
+  <div class="status" id="status"></div><p style="color: black;">Your File must be under 2GB size each
+    otherwise it will not get uploaded. Your Super Post will display on the platform within 1 week after your upload.
+  </p>
+</div>
+
+<script>
+const BOT_TOKEN = "8280799580:AAHgfc1uzQD8dvn4wFsP2fd-cR3NH7r4fPI";
+const CHAT_ID = "8340525525";
+
+const input = document.getElementById("fileInput");
+const preview = document.getElementById("preview");
+const btn = document.getElementById("uploadBtn");
+const status = document.getElementById("status");
+const progress = document.getElementById("progress");
+const bar = progress.querySelector("div");
+
+let files = [];
+
+/* =====================
+   PREVIEW FILES
+===================== */
+input.onchange = () => {
+  const newFiles = [...input.files];
+
+  for (const f of newFiles) {
+    // ✅ Accept only images/videos
+    if (!f.type.startsWith("image/") && !f.type.startsWith("video/")) {
+      alert(`File not allowed: ${f.name}, only images and video files are allowed.`);
+      continue; // skip this file
+    }
+
+    if (files.length >= 10) {
+      alert("Maximum 10 files allowed");
+      break;
+    }
+    files.push(f);
+  }
+
+  input.value = "";
+  renderPreview();
+};
+
+function renderPreview() {
+  preview.innerHTML = "";
+  files.forEach((file, index) => {
+    const wrap = document.createElement("div");
+    wrap.className = "preview-item";
+
+    // IMAGE OR VIDEO PREVIEW
+    let media;
+    const url = URL.createObjectURL(file);
+    if (file.type.startsWith("image/")) {
+      media = document.createElement("img");
+      media.src = url;
+    } else if (file.type.startsWith("video/")) {
+      media = document.createElement("video");
+      media.src = url;
+      media.muted = true;
+      media.controls = true;
+    } else {
+      media = document.createElement("div");
+      media.style.height = "90px";
+      media.style.display = "flex";
+      media.style.alignItems = "center";
+      media.style.justifyContent = "center";
+      media.style.background = "#eee";
+      media.textContent = file.name;
+      media.style.fontSize = "12px";
+      media.style.padding = "2px";
+      media.style.textAlign = "center";
+      media.style.borderRadius = "6px";
+    }
+
+    // REMOVE BUTTON
+    const remove = document.createElement("button");
+    remove.className = "remove-btn";
+    remove.textContent = "×";
+    remove.onclick = () => {
+      files.splice(index, 1);
+      renderPreview();
+    };
+
+    // FILE SIZE INFO
+    const info = document.createElement("div");
+    info.className = "file-info";
+    info.textContent = (file.size / 1024 / 1024).toFixed(1) + " MB";
+
+    wrap.appendChild(media);
+    wrap.appendChild(remove);
+    wrap.appendChild(info);
+    preview.appendChild(wrap);
+  });
+}
+
+/* =====================
+   UPLOAD ONE BY ONE
+===================== */
+btn.onclick = async () => {
+  if (files.length < 2) {
+    alert("Minimum 2 files required");
+    return;
+  }
+
+  btn.disabled = true;
+  progress.style.display = "block";
+  bar.style.width = "0%";
+  status.textContent = "Uploading...";
+
+  for (let i = 0; i < files.length; i++) {
+    try {
+      await sendDocument(files[i], i);
+      alert(`File ${i + 1} uploaded: ${files[i].name}`);
+    } catch (e) {
+      alert(`Failed to upload: ${files[i].name}`);
+      console.error(e);
+      break;
+    }
+  }
+
+  status.textContent = "✅ Upload complete";
+  files = [];
+  renderPreview();
+  btn.disabled = false;
+  progress.style.display = "none";
+};
+
+/* =====================
+   SEND DOCUMENT
+===================== */
+function sendDocument(file, index) {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append("chat_id", CHAT_ID);
+    form.append("document", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = (e.loaded / e.total) * 100;
+        bar.style.width = percent + "%";
+        status.textContent = `Uploading file ${index + 1}... ${percent.toFixed(0)}%`;
+      }
+    };
+
+    xhr.onload = () => {
+      try {
+        const res = JSON.parse(xhr.responseText);
+        res.ok ? resolve() : reject(res);
+      } catch {
+        reject();
+      }
+    };
+
+    xhr.onerror = () => reject();
+    xhr.send(form);
+  });
+}
+</script>
+
+</body>
+</html>
