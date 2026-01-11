@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: system-ui, -apple-system;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #25d366;
+            border: none;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+            cursor: pointer;
+        }
+
+        .back-btn:active {
+            transform: scale(0.95);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            text-transform: capitalize;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 6px solid #25d366;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .default-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25d366 0%, #1da851 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 70px;
+            font-weight: 900;
+            border: 6px solid #25d366;
+        }
+
+        .user-name {
+            font-size: 36px;
+            font-weight: 900;
+            color: #333;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+
+        .user-id {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .trustees-count {
+            color: #25d366;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .trustees-count::before {
+            content: "👥";
+            font-size: 24px;
+        }
+
+        /* Trust Button */
+        .trust-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 22px;
+            font-weight: 900;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .trust-btn.trust {
+            background: linear-gradient(135deg, #25d366 0%, #1da851 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        .trust-btn.remove {
+            background: linear-gradient(135deg, #ff4444 0%, #e53935 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(255, 68, 68, 0.4);
+        }
+
+        .trust-btn.pending {
+            background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(255, 165, 0, 0.4);
+            cursor: not-allowed;
+        }
+
+        .trust-btn:active:not(.pending) {
+            transform: scale(0.98);
+        }
+
+        .trust-btn.trust:hover:not(.pending) {
+            background: linear-gradient(135deg, #1da851 0%, #168f44 100%);
+        }
+
+        .trust-btn.remove:hover:not(.pending) {
+            background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+        }
+
+        /* Details Section */
+        .details {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .details h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #25d366;
+            font-weight: 800;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #666;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .detail-value {
+            color: #333;
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border: 2px solid;
+        }
+
+        .status-badge.online {
+            background: #e7fbe9;
+            color: #25d366;
+            border-color: #25d366;
+        }
+
+        .status-badge.offline {
+            background: #f0f0f0;
+            color: #666;
+            border-color: #ddd;
+        }
+
+        /* Message Section */
+        .message-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-section h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #25d366;
+            font-weight: 800;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 18px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 18px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: border-color 0.3s;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .message-input:focus {
+            border-color: #25d366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2);
+        }
+
+        .send-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .send-btn:active {
+            transform: scale(0.98);
+        }
+
+        .send-btn:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #003d80 100%);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #25d366 0%, #1da851 100%);
+            color: white;
+            padding: 18px 28px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            font-weight: 800;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.4s ease;
+            font-size: 16px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #ff4444 0%, #e53935 100%);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #eee;
+            border-top: 5px solid #25d366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 25px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media(max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .profile-card {
+                padding: 20px;
+            }
+
+            .avatar-container {
+                width: 150px;
+                height: 150px;
+            }
+
+            .default-avatar {
+                font-size: 60px;
+            }
+
+            .user-name {
+                font-size: 30px;
+            }
+
+            .trust-btn {
+                padding: 18px;
+                font-size: 20px;
+            }
+
+            .details,
+            .message-section {
+                padding: 20px;
+            }
+        }
+
+        @media(max-width: 480px) {
+            .avatar-container {
+                width: 130px;
+                height: 130px;
+            }
+
+            .default-avatar {
+                font-size: 50px;
+            }
+
+            .user-name {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-btn" onclick="goBack()">←</button>
+        <h1 id="pageTitle">Profile</h1>
+    </div>
+
+    <div id="profileContent">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            Loading profile...
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        const API = "https://api.github.com";
+        const token = "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";
+        const owner = "authorization-tech";
+
+        // Get user info from localStorage
+        const viewUser = localStorage.getItem("viewUser");
+        const viewRepo = localStorage.getItem("viewRepo");
+        const currentUser = localStorage.getItem("authUser");
+        const currentUserRepo = localStorage.getItem("authRepo");
+
+        // Check authentication
+        if (!currentUser || !currentUserRepo || !viewUser || !viewRepo) {
+            window.location.href = "csearch.html";
+        }
+
+        async function api(path, method = "GET", body) {
+            const headers = {
+                Authorization: "token " + token,
+                Accept: "application/vnd.github+json"
+            };
+
+            if (body && method !== "GET") {
+                headers["Content-Type"] = "application/json";
+            }
+
+            const res = await fetch(API + path, {
+                method,
+                headers,
+                body: body ? JSON.stringify(body) : null
+            });
+
+            if (!res.ok) {
+                if (res.status === 404) return null;
+                throw new Error(`API Error: ${res.status}`);
+            }
+            return res.json();
+        }
+
+        function showNotification(message, type = "success") {
+            const notification = document.getElementById("notification");
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        async function loadAvatar(repo, container) {
+            console.log(`Loading avatar from repo: ${repo}`);
+            
+            // Try common image files
+            const imageNames = ["profile.jpg", "profile.png", "avatar.jpg", "avatar.png", "user.jpg", "picture.jpg"];
+            
+            for (const file of imageNames) {
+                try {
+                    console.log(`Trying to load: ${file}`);
+                    const imgData = await api(`/repos/${owner}/${repo}/contents/${file}`);
+                    
+                    if (imgData && imgData.content) {
+                        console.log(`Found image: ${file}`);
+                        const ext = file.split('.').pop().toLowerCase();
+                        const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+                        
+                        const img = document.createElement("img");
+                        img.className = "profile-img";
+                        img.src = `data:${mime};base64,${imgData.content}`;
+                        img.onload = () => {
+                            console.log(`Image loaded successfully: ${file}`);
+                        };
+                        img.onerror = () => {
+                            console.log(`Failed to load image: ${file}`);
+                            showFallbackAvatar(container);
+                        };
+                        container.innerHTML = '';
+                        container.appendChild(img);
+                        return true;
+                    }
+                } catch (e) {
+                    console.log(`File not found: ${file}`, e.message);
+                    continue;
+                }
+            }
+            
+            // Try to load from profile.json
+            try {
+                const profileData = await api(`/repos/${owner}/${repo}/contents/profile.json`);
+                if (profileData && profileData.content) {
+                    const profile = JSON.parse(atob(profileData.content));
+                    console.log("Profile data found:", profile);
+                    
+                    if (profile.avatarData) {
+                        const img = document.createElement("img");
+                        img.className = "profile-img";
+                        img.src = `data:image/jpeg;base64,${profile.avatarData}`;
+                        container.innerHTML = '';
+                        container.appendChild(img);
+                        return true;
+                    }
+                    
+                    if (profile.avatar) {
+                        const avatarFile = profile.avatar;
+                        try {
+                            const imgData = await api(`/repos/${owner}/${repo}/contents/${avatarFile}`);
+                            if (imgData && imgData.content) {
+                                const ext = avatarFile.split('.').pop().toLowerCase();
+                                const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+                                
+                                const img = document.createElement("img");
+                                img.className = "profile-img";
+                                img.src = `data:${mime};base64,${imgData.content}`;
+                                container.innerHTML = '';
+                                container.appendChild(img);
+                                return true;
+                            }
+                        } catch (e) {
+                            console.log(`Failed to load avatar from profile.json: ${avatarFile}`);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log("No profile.json found or error:", e.message);
+            }
+            
+            // Show fallback avatar
+            showFallbackAvatar(container);
+            return false;
+        }
+
+        function showFallbackAvatar(container) {
+            console.log("Showing fallback avatar");
+            const fallback = document.createElement("div");
+            fallback.className = "default-avatar";
+            fallback.textContent = viewUser[0].toUpperCase();
+            container.innerHTML = '';
+            container.appendChild(fallback);
+        }
+
+        async function checkFriendStatus() {
+            try {
+                const friendsRes = await api(`/repos/${owner}/${currentUserRepo}/contents/friends.txt`);
+                if (!friendsRes) return false;
+
+                const friendsData = atob(friendsRes.content);
+                const friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+                return friends.includes(viewUser);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function checkSentRequests() {
+            try {
+                const requestsRes = await api(`/repos/${owner}/${viewRepo}/contents/requests.txt`);
+                if (!requestsRes) return false;
+
+                const requestsData = atob(requestsRes.content);
+                const requests = requestsData.split(',').map(r => r.trim()).filter(r => r);
+                return requests.includes(currentUser);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function getTrusteesCount() {
+            try {
+                const friendsRes = await api(`/repos/${owner}/${viewRepo}/contents/friends.txt`);
+                if (!friendsRes) return 0;
+
+                const friendsData = atob(friendsRes.content);
+                const friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+                return friends.length;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        async function sendFriendRequest() {
+            try {
+                // Get existing requests
+                let requests = [];
+                let sha = null;
+
+                try {
+                    const requestsRes = await api(`/repos/${owner}/${viewRepo}/contents/requests.txt`);
+                    if (requestsRes) {
+                        requests = atob(requestsRes.content).split(',').map(r => r.trim()).filter(r => r);
+                        sha = requestsRes.sha;
+                    }
+                } catch (e) {
+                    // File doesn't exist yet
+                }
+
+                // Add current user to requests
+                if (!requests.includes(currentUser)) {
+                    requests.push(currentUser);
+                    const content = btoa(requests.join(','));
+
+                    // Update requests file
+                    await api(`/repos/${owner}/${viewRepo}/contents/requests.txt`, "PUT", {
+                        message: `Friend request from ${currentUser}`,
+                        content: content,
+                        sha: sha
+                    });
+
+                    // Create notification for the viewed user
+                    await createNotification(`Friend request from ${currentUser}`);
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.error("Error sending friend request:", e);
+                showNotification("Failed to send friend request", "error");
+                return false;
+            }
+        }
+
+        async function createNotification(message) {
+            try {
+                const timestamp = new Date().toISOString();
+                const notificationData = {
+                    message: message,
+                    from: currentUser,
+                    timestamp: timestamp,
+                    read: false
+                };
+
+                let notifications = [];
+                let sha = null;
+
+                try {
+                    const notifRes = await api(`/repos/${owner}/${viewRepo}/contents/notifications.json`);
+                    if (notifRes) {
+                        notifications = JSON.parse(atob(notifRes.content));
+                        sha = notifRes.sha;
+                    }
+                } catch (e) {
+                    // File doesn't exist yet
+                }
+
+                notifications.push(notificationData);
+                const content = btoa(JSON.stringify(notifications, null, 2));
+
+                await api(`/repos/${owner}/${viewRepo}/contents/notifications.json`, "PUT", {
+                    message: `New notification from ${currentUser}`,
+                    content: content,
+                    sha: sha
+                });
+            } catch (e) {
+                console.error("Error creating notification:", e);
+            }
+        }
+
+        async function removeFriend() {
+            try {
+                // Remove from current user's friends list
+                const friendsRes = await api(`/repos/${owner}/${currentUserRepo}/contents/friends.txt`);
+                if (!friendsRes) return false;
+
+                let friends = atob(friendsRes.content).split(',').map(f => f.trim()).filter(f => f);
+                friends = friends.filter(f => f !== viewUser);
+                const content = btoa(friends.join(','));
+
+                await api(`/repos/${owner}/${currentUserRepo}/contents/friends.txt`, "PUT", {
+                    message: `Removed ${viewUser} from friends`,
+                    content: content,
+                    sha: friendsRes.sha
+                });
+
+                // Remove current user from viewed user's friends list
+                const viewFriendsRes = await api(`/repos/${owner}/${viewRepo}/contents/friends.txt`);
+                if (viewFriendsRes) {
+                    let viewFriends = atob(viewFriendsRes.content).split(',').map(f => f.trim()).filter(f => f);
+                    viewFriends = viewFriends.filter(f => f !== currentUser);
+                    const viewContent = btoa(viewFriends.join(','));
+
+                    await api(`/repos/${owner}/${viewRepo}/contents/friends.txt`, "PUT", {
+                        message: `Removed ${currentUser} from friends`,
+                        content: viewContent,
+                        sha: viewFriendsRes.sha
+                    });
+                }
+
+                return true;
+            } catch (e) {
+                console.error("Error removing friend:", e);
+                showNotification("Failed to remove friend", "error");
+                return false;
+            }
+        }
+
+        async function checkOnlineStatus() {
+            try {
+                const statusRes = await api(`/repos/${owner}/${viewRepo}/contents/status.json`);
+                if (!statusRes) return false;
+
+                const statusData = JSON.parse(atob(statusRes.content));
+                const lastSeen = new Date(statusData.lastSeen);
+                const now = new Date();
+                const diffMinutes = (now - lastSeen) / (1000 * 60);
+
+                // Consider online if last seen within 5 minutes
+                return diffMinutes < 5;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function updateTrustButton() {
+            const trustBtn = document.getElementById('trustBtn');
+            if (!trustBtn) return;
+
+            const isFriend = await checkFriendStatus();
+            const hasSentRequest = await checkSentRequests();
+
+            if (isFriend) {
+                trustBtn.textContent = 'REMOVE TRUST';
+                trustBtn.className = 'trust-btn remove';
+                trustBtn.onclick = async () => {
+                    if (confirm(`Are you sure you want to remove ${viewUser} from your trustees?`)) {
+                        const success = await removeFriend();
+                        if (success) {
+                            showNotification(`${viewUser} removed from trustees`);
+                            await updateTrustButton();
+                            await updateTrusteesCount();
+                        }
+                    }
+                };
+            } else if (hasSentRequest) {
+                trustBtn.textContent = 'REQUEST SENT';
+                trustBtn.className = 'trust-btn pending';
+                trustBtn.onclick = null;
+            } else {
+                trustBtn.textContent = 'TRUST';
+                trustBtn.className = 'trust-btn trust';
+                trustBtn.onclick = async () => {
+                    const success = await sendFriendRequest();
+                    if (success) {
+                        showNotification(`Trust request sent to ${viewUser}!`, "success");
+                        await updateTrustButton();
+                    }
+                };
+            }
+        }
+
+        async function updateTrusteesCount() {
+            const count = await getTrusteesCount();
+            const countElement = document.getElementById('trusteesCount');
+            if (countElement) {
+                countElement.textContent = `${count} Trustee${count !== 1 ? 's' : ''}`;
+            }
+        }
+
+        async function updateOnlineStatus() {
+            const isOnline = await checkOnlineStatus();
+            const statusElement = document.getElementById('userStatus');
+            if (statusElement) {
+                statusElement.textContent = isOnline ? 'Online' : 'Offline';
+                statusElement.className = `status-badge ${isOnline ? 'online' : 'offline'}`;
+            }
+        }
+
+        async function loadProfile() {
+            try {
+                // Update page title
+                document.getElementById("pageTitle").textContent = viewUser;
+
+                // Create profile card HTML
+                const profileHTML = `
+                    <div class="profile-card">
+                        <div class="avatar-container" id="avatarContainer"></div>
+                        <div class="status-badge" id="userStatus">Loading...</div>
+                        <h1 class="user-name">${viewUser}</h1>
+                        <div class="user-id">ID: @${viewUser}</div>
+                        <div class="trustees-count" id="trusteesCount">Loading trustees...</div>
+                        <button class="trust-btn" id="trustBtn">Loading...</button>
+                    </div>
+                    <div class="details">
+                        <h2>Details</h2>
+                        <div class="detail-item">
+                            <span class="detail-label">Username</span>
+                            <span class="detail-value">@${viewUser}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Repository</span>
+                            <span class="detail-value">${viewRepo}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Trust Status</span>
+                            <span class="detail-value" id="trustStatus">Checking...</span>
+                        </div>
+                    </div>
+                    <div class="message-section">
+                        <h2>Send Message</h2>
+                        <textarea class="message-input" placeholder="Type your message here..." id="messageInput"></textarea>
+                        <button class="send-btn" onclick="sendMessage()">SEND MESSAGE</button>
+                    </div>
+                `;
+
+                document.getElementById("profileContent").innerHTML = profileHTML;
+
+                // Load avatar FIRST - this is the main focus
+                await loadAvatar(viewRepo, document.getElementById('avatarContainer'));
+
+                // Update other elements
+                await updateTrustButton();
+                await updateTrusteesCount();
+                await updateOnlineStatus();
+
+                // Update trust status in details
+                const isFriend = await checkFriendStatus();
+                const hasSentRequest = await checkSentRequests();
+                const trustStatusElement = document.getElementById('trustStatus');
+                if (trustStatusElement) {
+                    if (isFriend) {
+                        trustStatusElement.textContent = 'Trusted ✓';
+                        trustStatusElement.style.color = '#25d366';
+                    } else if (hasSentRequest) {
+                        trustStatusElement.textContent = 'Request Pending ⏳';
+                        trustStatusElement.style.color = '#ffa500';
+                    } else {
+                        trustStatusElement.textContent = 'Not Trusted ✗';
+                        trustStatusElement.style.color = '#666';
+                    }
+                }
+
+                // Refresh online status every 30 seconds
+                setInterval(updateOnlineStatus, 30000);
+
+            } catch (error) {
+                console.error("Error loading profile:", error);
+                document.getElementById("profileContent").innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        Error loading profile. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+
+            if (!message) {
+                showNotification("Please enter a message", "error");
+                return;
+            }
+
+            try {
+                // Save message to user's repository
+                const timestamp = new Date().toISOString();
+                const messageData = {
+                    from: currentUser,
+                    message: message,
+                    timestamp: timestamp,
+                    read: false
+                };
+
+                let messages = [];
+                let sha = null;
+
+                try {
+                    const messagesRes = await api(`/repos/${owner}/${viewRepo}/contents/messages.json`);
+                    if (messagesRes) {
+                        messages = JSON.parse(atob(messagesRes.content));
+                        sha = messagesRes.sha;
+                    }
+                } catch (e) {
+                    // File doesn't exist yet
+                }
+
+                messages.push(messageData);
+                const content = btoa(JSON.stringify(messages, null, 2));
+
+                await api(`/repos/${owner}/${viewRepo}/contents/messages.json`, "PUT", {
+                    message: `New message from ${currentUser}`,
+                    content: content,
+                    sha: sha
+                });
+
+                // Also create a notification
+                await createNotification(`New message from ${currentUser}: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
+
+                showNotification(`Message sent to ${viewUser}!`, "success");
+                messageInput.value = '';
+
+            } catch (error) {
+                console.error("Error sending message:", error);
+                showNotification("Failed to send message", "error");
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Load profile when page loads
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>
