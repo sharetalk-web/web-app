@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sharetalk/my/profile</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:#f0f2f5}
+    .header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:white;border-bottom:1px solid #ddd;position:fixed;top:0;width:100%;z-index:100}
+    .header-buttons{display:flex;gap:10px}
+    .header-btn{padding:8px 15px;background:#1877F2;color:white;border:none;border-radius:5px;cursor:pointer;font-size:14px}
+    .header-btn:hover{background:#166fe5}
+    .main-content{margin-top:60px}
+    .cover-section{height:250px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);position:relative}
+    .cover-photo{width:100%;height:100%;object-fit:cover}
+    .edit-cover-btn{position:absolute;bottom:15px;right:15px;background:rgba(0,0,0,0.7);color:white;border:none;padding:8px 12px;border-radius:5px;cursor:pointer}
+    .profile-info{padding:20px;background:white;margin-top:-50px;position:relative}
+    .profile-pic-section{display:;align-items:flex-end;gap:20px;margin-bottom:20px}
+    .profile-pic{width:35vw;height:35vw;border-radius: 20px;border:4px solid #007bff;background:#1877F2;display:flex;align-items:center;justify-content:center;color:white;font-size:40px;font-weight:bold;position:relative; postion: fixed;}
+    .profile-pic img{width:100%;height:100%;border-radius:20px;object-fit:cover}
+    .edit-pic-btn{position:absolute;bottom:5px;right:5px;background:#1877F2;color:white;border:none;width:30px;height:30px;border-radius:50%;cursor:pointer}
+    .profile-name h2{font-size:24px;margin-bottom:5px}
+    .profile-name p{color:#666;font-size:14px}
+    .edit-profile-btn{margin-left:auto;padding:8px 16px;background:#E4E6EB;border:none;border-radius:5px;cursor:pointer;font-weight:bold}
+    .profile-details{padding:20px;background:white;margin-top:10px}
+    .detail-item{padding:10px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+    .detail-item:last-child{border-bottom:none}
+    .detail-label{font-weight:bold;color:#333;min-width:80px}
+    .detail-value{color:#666;flex:1;margin-left:20px}
+    .edit-btn{font-weight: 900; color:#1877F2;background:none;border:none;cursor:pointer;padding:5px 10px}
+    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
+    .modal.active{display:flex}
+    .modal-content{background:white;border-radius:8px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto}
+    .modal-header{padding:15px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center}
+    .modal-title{font-size:18px;font-weight:bold}
+    .close-modal{background:none;border:none;font-size:24px;cursor:pointer;color:#666}
+    .modal-body{padding:15px}
+    .form-group{margin-bottom:15px}
+    .form-group label{display:block;margin-bottom:5px;font-weight:bold}
+    .form-group input,.form-group textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px}
+    .form-group textarea{resize:vertical;min-height:80px}
+    .modal-actions{padding:15px;border-top:1px solid #ddd;display:flex;gap:10px;justify-content:flex-end}
+    .cancel-btn,.save-btn{padding:8px 16px;border-radius:4px;border:none;cursor:pointer}
+    .cancel-btn{background:#E4E6EB;color:#333}
+    .save-btn{background:#1877F2;color:white}
+    .loading{text-align:center;padding:40px;color:#666}
+    .error{color:#ff0000;padding:10px;text-align:center;background:#ffebee;margin:10px;border-radius:4px}
+    /* Friends Section */
+    .friends-section{margin-top:20px;padding:20px;background:white;border-radius:8px}
+    .friends-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+    .friends-header h3{font-size:18px;color:#333}
+    .friends-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:15px}
+    .friend-item{text-align:center;cursor:pointer;position:relative}
+    .friend-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 8px;background:#1877F2;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold;overflow:hidden; border: 2px solid #007bff}
+    .friend-avatar img{width:100%;height:100%;object-fit:cover}
+    .friend-name{font-size:14px;color:#333;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .remove-friend-btn{position:absolute;top:-5px;right:-5px;background:#ff4444;color:white;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;z-index:10;display:none}
+    .friend-item:hover .remove-friend-btn{display:flex}
+    .no-friends{text-align:center;padding:20px;color:#666}
+    .manage-friends-btn{background:#42b72a;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="font-weight: 900;">My Profile</h1>
+    <div class="header-buttons">
+      <button class="header-btn" onclick="goHome()">Home</button>
+      <button class="header-btn" onclick="selectCoverPhoto()">Select Cover</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="cover-section">
+      <img id="coverPhoto" class="cover-photo" style="display:none">
+      <button class="edit-cover-btn" onclick="selectCoverPhoto()">Edit Cover</button>
+    </div>
+
+    <div class="profile-info">
+      <div class="profile-pic-section">
+      
+        <div class="profile-pic">
+            <div id="noPic">N</div>
+          <img id="profilePic" style="display:none">
+          <button class="edit-pic-btn" onclick="editPic()">Edit</button>
+        </div><br>
+        <div class="profile-name">
+          <h2 id="username">Loading...</h2>
+          <p id="bio">No bio yet</p>
+        </div><br>
+        <button class="edit-profile-btn" onclick="editProfile()">Edit Profile</button>
+      </div>
+    </div>
+
+    <div class="profile-details">
+      <div class="detail-item">
+        <div class="detail-label">Location</div>
+        <div class="detail-value" id="location">Not set</div>
+        <button class="edit-btn" onclick="editField('location')">Edit</button>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">About</div>
+        <div class="detail-value" id="about">Not set</div>
+        <button class="edit-btn" onclick="editField('about')">Edit</button>
+      </div>
+      
+      <div class="detail-item">
+        <div class="detail-label">Friends</div>
+        <div class="detail-value" id="friendsCount">0 friends</div>
+      </div>
+    </div>
+
+    <!-- Friends Section -->
+    <div class="friends-section" id="friendsSection" style="display:none">
+      <div class="friends-header">
+        <h3>My Friends</h3>
+           </div>
+      <div class="friends-grid" id="friendsGrid"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Edit</div>
+        <button class="close-modal" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions">
+        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+        <button class="save-btn" id="saveBtn" onclick="saveChanges()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="coverFileInput" accept="image/*" style="display:none" onchange="handleCoverSelect(event)">
+  <input type="file" id="picFileInput" accept="image/*" style="display:none" onchange="handlePicSelect(event)">
+
+  <div class="loading" id="loading">Loading profile...</div>
+
+  <script>
+    const TOKEN = "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";
+    const API = "https://api.github.com";
+    const OWNER = "authorization-tech";
+    const MAX_SIZE = 1 * 1024 * 1024; // 1MB
+    
+    let currentUser = null;
+    let currentRepo = null;
+    let editType = null;
+    let profileData = {};
+
+    // Function to call GitHub API
+    async function api(path) {
+      const r = await fetch(API + path, {
+        headers: { Authorization: "token " + TOKEN }
+      });
+      if (!r.ok) throw new Error('API error');
+      return r.json();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      currentUser = localStorage.getItem("authUser");
+      currentRepo = localStorage.getItem("authRepo");
+      
+      if (!currentUser || !currentRepo) {
+        alert("Please login first");
+        window.location.href = "index.html";
+        return;
+      }
+      
+      loadProfile();
+    });
+
+    // Basic Functions
+    function goHome() {
+      window.location.href = "home.html";
+    }
+
+    function selectCoverPhoto() {
+      document.getElementById('coverFileInput').click();
+    }
+
+    // File handling functions
+    async function getFile(filename) {
+      const res = await fetch(`${API}/repos/${OWNER}/${currentRepo}/contents/${filename}`, {
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (!res.ok) throw new Error('File not found');
+      
+      const data = await res.json();
+      
+      if (filename.endsWith('.txt')) {
+        return atob(data.content);
+      } else {
+        return `data:image/jpeg;base64,${data.content}`;
+      }
+    }
+
+    async function getFileFromRepo(repo, filename) {
+      const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (!res.ok) throw new Error('File not found');
+      
+      const data = await res.json();
+      
+      if (filename.endsWith('.txt')) {
+        return atob(data.content);
+      } else {
+        return `data:image/jpeg;base64,${data.content}`;
+      }
+    }
+
+    async function uploadFile(filename, content) {
+      let sha = null;
+      try {
+        const res = await fetch(`${API}/repos/${OWNER}/${currentRepo}/contents/${filename}`, {
+          headers: {
+            'Authorization': `token ${TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sha = data.sha;
+        }
+      } catch (e) {}
+      
+      const res = await fetch(`${API}/repos/${OWNER}/${currentRepo}/contents/${filename}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Update ${filename}`,
+          content: content,
+          sha: sha
+        })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+    }
+
+    async function saveFile(filename, content) {
+      let sha = null;
+      try {
+        await getFile(filename);
+        const res = await fetch(`${API}/repos/${OWNER}/${currentRepo}/contents/${filename}`, {
+          headers: {
+            'Authorization': `token ${TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sha = data.sha;
+        }
+      } catch (e) {}
+      
+      const res = await fetch(`${API}/repos/${OWNER}/${currentRepo}/contents/${filename}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Update ${filename}`,
+          content: btoa(content),
+          sha: sha
+        })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+    }
+
+    // Image compression
+    async function compressImage(file, type) {
+      return new Promise((resolve) => {
+        if (file.size <= MAX_SIZE) {
+          resolve(file);
+          return;
+        }
+        
+        const img = new Image();
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          img.src = e.target.result;
+          
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            let width = img.width;
+            let height = img.height;
+            let quality = 0.9;
+            
+            if (type === 'profile') {
+              const maxDim = 500;
+              if (width > height && width > maxDim) {
+                height = (height * maxDim) / width;
+                width = maxDim;
+              } else if (height > maxDim) {
+                width = (width * maxDim) / height;
+                height = maxDim;
+              }
+            } else {
+              const maxWidth = 1200;
+              const maxHeight = 300;
+              if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+              }
+              if (height > maxHeight) {
+                width = (width * maxHeight) / height;
+                height = maxHeight;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob((blob) => {
+              const newFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              });
+              resolve(newFile);
+            }, 'image/jpeg', quality);
+          };
+        };
+        
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Profile loading
+    async function loadProfile() {
+      try {
+        document.getElementById('username').textContent = currentUser;
+        await loadData();
+        await loadFriendsList();
+        document.getElementById('loading').style.display = 'none';
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+        showError("Failed to load profile");
+      }
+    }
+
+    async function loadData() {
+      try {
+        const [bio, location, about] = await Promise.allSettled([
+          getFile('bio.txt').catch(() => ''),
+          getFile('location.txt').catch(() => ''),
+          getFile('about.txt').catch(() => '')
+        ]);
+        
+        if (bio.value) {
+          document.getElementById('bio').textContent = bio.value;
+          profileData.bio = bio.value;
+        }
+        
+        if (location.value) {
+          document.getElementById('location').textContent = location.value;
+          profileData.location = location.value;
+        }
+        
+        if (about.value) {
+          document.getElementById('about').textContent = about.value;
+          profileData.about = about.value;
+        }
+        
+        // Load profile picture
+        try {
+          const pic = await getFile('profile.jpg');
+          if (pic) {
+            document.getElementById('profilePic').src = pic;
+            document.getElementById('profilePic').style.display = 'block';
+            document.getElementById('noPic').style.display = 'none';
+          }
+        } catch (e) {}
+        
+        // Load cover photo
+        try {
+          const cover = await getFile('cover.jpg');
+          if (cover) {
+            document.getElementById('coverPhoto').src = cover;
+            document.getElementById('coverPhoto').style.display = 'block';
+          }
+        } catch (e) {}
+        
+      } catch (error) {
+        console.error("Load error:", error);
+      }
+    }
+
+    // Friends List Functions
+    async function loadFriendsList() {
+      try {
+        const friendsData = await getFile('friends.txt').catch(() => null);
+        
+        if (!friendsData) {
+          document.getElementById('friendsSection').style.display = 'none';
+          document.getElementById('friendsCount').textContent = '0 friends';
+          return;
+        }
+        
+        const friendUsernames = friendsData.split(',').map(f => f.trim()).filter(f => f);
+        
+        // Update friends count
+        const friendsCount = friendUsernames.length;
+        document.getElementById('friendsCount').textContent = `${friendsCount} friends`;
+        
+        // Display friends
+        const friendsGrid = document.getElementById('friendsGrid');
+        friendsGrid.innerHTML = '';
+        
+        if (friendsCount === 0) {
+          friendsGrid.innerHTML = '<div class="no-friends">No friends yet</div>';
+          document.getElementById('friendsSection').style.display = 'block';
+          return;
+        }
+        
+        // Load friends for display
+        for (const friendUsername of friendUsernames.slice(0, 9)) {
+          await displayFriendItem(friendUsername);
+        }
+        
+        document.getElementById('friendsSection').style.display = 'block';
+      } catch (error) {
+        console.error("Error loading friends list:", error);
+      }
+    }
+
+    async function displayFriendItem(friendUsername) {
+      const friendRepo = await findUserRepo(friendUsername);
+      if (!friendRepo) return;
+      
+      const friendItem = document.createElement('div');
+      friendItem.className = 'friend-item';
+      
+      // Get friend's profile pic
+      let profilePic = '';
+      try {
+        profilePic = await getFileFromRepo(friendRepo, 'profile.jpg');
+      } catch (e) {}
+      
+      // Create avatar
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'friend-avatar';
+      if (profilePic) {
+        const img = document.createElement('img');
+        img.src = profilePic;
+        img.alt = friendUsername;
+        avatarDiv.appendChild(img);
+      } else {
+        avatarDiv.textContent = friendUsername[0].toUpperCase();
+      }
+      
+      // Create name
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'friend-name';
+      nameDiv.textContent = friendUsername;
+      
+      // Create remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-friend-btn';
+      removeBtn.innerHTML = '×';
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        removeFriendFromList(friendUsername, friendItem);
+      };
+      
+      // Assemble the item
+      friendItem.appendChild(avatarDiv);
+      friendItem.appendChild(nameDiv);
+      friendItem.appendChild(removeBtn);
+      
+      // Click to view friend's profile
+      friendItem.onclick = () => {
+        localStorage.setItem("viewUser", friendUsername);
+        localStorage.setItem("viewRepo", friendRepo);
+        window.location.href = "view.html";
+      };
+      
+      document.getElementById('friendsGrid').appendChild(friendItem);
+    }
+
+    async function findUserRepo(username) {
+      try {
+        const repos = await api('/user/repos?per_page=100');
+        for (const repo of repos) {
+          if (!/^user\d+$/.test(repo.name)) continue;
+          
+          try {
+            const userData = await getFileFromRepo(repo.name, 'username.txt');
+            if (userData.trim() === username) {
+              return repo.name;
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+      } catch (error) {
+        console.error("Error finding user repo:", error);
+      }
+      return null;
+    }
+
+    async function removeFriendFromList(friendUsername, friendItem) {
+      if (!confirm(`Remove ${friendUsername} from your friends?`)) return;
+      
+      try {
+        // Get current friends list
+        let friendsData = await getFile('friends.txt').catch(() => '');
+        let friends = friendsData ? friendsData.split(',').map(f => f.trim()).filter(f => f) : [];
+        
+        // Remove friend
+        friends = friends.filter(f => f !== friendUsername);
+        
+        // Save updated friends list
+        await saveFile('friends.txt', friends.join(','));
+        
+        // Remove from display
+        friendItem.remove();
+        
+        // Update friends count
+        const newCount = friends.length;
+        document.getElementById('friendsCount').textContent = `${newCount} friends`;
+        
+        if (newCount === 0) {
+          document.getElementById('friendsGrid').innerHTML = '<div class="no-friends">No friends yet</div>';
+        }
+        
+        alert(`Removed ${friendUsername} from friends.`);
+      } catch (error) {
+        alert("Failed to remove friend: " + error.message);
+      }
+    }
+
+    // Image selection handlers
+    async function handleCoverSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      if (file.size > MAX_SIZE) {
+        if (!confirm(`Image is ${(file.size/1024/1024).toFixed(1)}MB. Automatically compress to under 1MB?`)) {
+          return;
+        }
+      }
+      
+      const processedFile = await compressImage(file, 'cover');
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = document.getElementById('coverPhoto');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        
+        if (confirm("Save this cover photo?")) {
+          saveCoverPhoto(processedFile);
+        }
+      };
+      reader.readAsDataURL(processedFile);
+    }
+
+    async function saveCoverPhoto(file) {
+      try {
+        const base64 = await fileToBase64(file);
+        const content = base64.split(',')[1];
+        await uploadFile('cover.jpg', content);
+        alert("Cover photo saved!");
+      } catch (error) {
+        alert("Failed to save: " + error.message);
+      }
+    }
+
+    async function handlePicSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      if (file.size > MAX_SIZE) {
+        if (!confirm(`Image is ${(file.size/1024/1024).toFixed(1)}MB. Automatically compress to under 1MB?`)) {
+          return;
+        }
+      }
+      
+      const processedFile = await compressImage(file, 'profile');
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = document.getElementById('profilePic');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        document.getElementById('noPic').style.display = 'none';
+        
+        if (confirm("Save this profile picture?")) {
+          saveProfilePic(processedFile);
+        }
+      };
+      reader.readAsDataURL(processedFile);
+    }
+
+    async function saveProfilePic(file) {
+      try {
+        const base64 = await fileToBase64(file);
+        const content = base64.split(',')[1];
+        await uploadFile('profile.jpg', content);
+        alert("Profile picture saved!");
+      } catch (error) {
+        alert("Failed to save: " + error.message);
+      }
+    }
+
+    // Edit profile functions
+    function editPic() {
+      document.getElementById('picFileInput').click();
+    }
+
+    function editProfile() {
+      editType = 'profileInfo';
+      showTextModal('Edit Profile', {
+        username: { label: 'Username', value: currentUser },
+        bio: { label: 'Bio', value: profileData.bio || '' }
+      });
+    }
+
+    function editField(field) {
+      editType = field;
+      const label = field.charAt(0).toUpperCase() + field.slice(1);
+      const value = profileData[field] || '';
+      showTextModal('Edit ' + label, {
+        [field]: { label, value }
+      });
+    }
+
+    function showTextModal(title, fields) {
+      document.getElementById('modalTitle').textContent = title;
+      
+      const html = Object.entries(fields).map(([key, field]) => `
+        <div class="form-group">
+          <label>${field.label}</label>
+          ${field.label === 'Bio' || field.label === 'About' ?
+            `<textarea id="edit-${key}">${field.value}</textarea>` :
+            `<input type="text" id="edit-${key}" value="${field.value}">`
+          }
+        </div>
+      `).join('');
+      
+      document.getElementById('modalBody').innerHTML = html;
+      openModal();
+    }
+
+    function openModal() {
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('active');
+      document.getElementById('modalBody').innerHTML = '';
+    }
+
+    async function saveChanges() {
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+      
+      try {
+        const updates = {};
+        
+        if (editType === 'profileInfo') {
+          const newUsername = document.getElementById('edit-username').value.trim();
+          const bio = document.getElementById('edit-bio').value.trim();
+          
+          if (newUsername) {
+            updates['username.txt'] = newUsername;
+            if (newUsername !== currentUser) {
+              localStorage.setItem('authUser', newUsername);
+              currentUser = newUsername;
+            }
+          }
+          
+          if (bio !== profileData.bio) {
+            updates['bio.txt'] = bio;
+          }
+        } else if (editType === 'location') {
+          updates['location.txt'] = document.getElementById('edit-location').value.trim();
+        } else if (editType === 'about') {
+          updates['about.txt'] = document.getElementById('edit-about').value.trim();
+        }
+        
+        for (const [filename, content] of Object.entries(updates)) {
+          await uploadFile(filename, btoa(content));
+        }
+        
+        closeModal();
+        await loadData();
+        alert('Saved successfully!');
+        
+      } catch (error) {
+        alert('Save failed: ' + error.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+      }
+    }
+
+    function manageFriends() {
+      alert("Click on your friend DP to visit his prifile.");
+    }
+
+    function showError(message) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error';
+      errorDiv.textContent = message;
+      document.body.appendChild(errorDiv);
+      setTimeout(() => errorDiv.remove(), 3000);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+</html>
