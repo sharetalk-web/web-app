@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sharetalk/notifications</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:#f0f2f5}
+    .header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:white;border-bottom:1px solid #ddd;position:fixed;top:0;width:100%;z-index:100}
+    .header-buttons{display:flex;gap:10px}
+    .header-btn{padding:8px 15px;background:#1877F2;color:white;border:none;border-radius:5px;cursor:pointer;font-size:14px}
+    .header-btn:hover{background:#166fe5}
+    .main-content{margin-top:60px;padding:20px}
+    .notifications-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .notifications-header h2{font-size:24px;color:#333}
+    .clear-all-btn{background:#ff4444;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer}
+    .clear-all-btn:hover{background:#cc0000}
+    .notification-item{background:white;border-radius:10px;padding:15px;margin-bottom:15px;display:flex;align-items:center;gap:15px;border-left:4px solid #1877F2}
+    .notification-item.unread{border-left:4px solid #ff9800}
+    .notification-avatar{border: 1.5px solid #007bff; width:50px;height:50px;border-radius:50%;background:#1877F2;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:bold;overflow:hidden;flex-shrink:0}
+    .notification-avatar img{width:100%;height:100%;object-fit:cover}
+    .notification-content{flex:1}
+    .notification-text{font-size:16px;color:#333;margin-bottom:5px}
+    .notification-time{font-size:12px;color:#999}
+    .notification-actions{display:flex;gap:10px}
+    .accept-btn{background:#42b72a;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}
+    .accept-btn:hover{background:#36a420}
+    .reject-btn{background:#ff4444;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}
+    .reject-btn:hover{background:#cc0000}
+    .view-btn{background:#1877F2;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}
+    .view-btn:hover{background:#166fe5}
+    .no-notifications{text-align:center;padding:40px;color:#666;font-size:18px}
+    .loading{text-align:center;padding:40px;color:#666}
+    .notification-type{font-size:12px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="font-weight: 900;">Notifications</h1>
+    <div class="header-buttons">
+      <button class="header-btn" onclick="goHome()">Home</button>
+      <button class="header-btn" onclick="goBack()">Back</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="notifications-header">
+      <h2>Friend Requests</h2>
+      <button class="clear-all-btn" onclick="clearAllNotifications()">Clear All</button>
+    </div>
+    
+    <div id="notificationsList"></div>
+    
+    <div class="loading" id="loading">Loading notifications...</div>
+  </div>
+
+  <script>
+    const TOKEN = "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";
+    const API = "https://api.github.com";
+    const OWNER = "authorization-tech";
+    
+    let currentUser = null;
+    let currentRepo = null;
+    let notifications = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      currentUser = localStorage.getItem("authUser");
+      currentRepo = localStorage.getItem("authRepo");
+      
+      if (!currentUser || !currentRepo) {
+        alert("Please login first");
+        window.location.href = "index.html";
+        return;
+      }
+      
+      loadNotifications();
+    });
+
+    function goHome() {
+      window.location.href = "home.html";
+    }
+
+    function goBack() {
+      window.history.back();
+    }
+
+    async function loadNotifications() {
+      try {
+        // Load notifications from GitHub
+        const notificationsData = await getFile('notifications.txt').catch(() => null);
+        
+        if (!notificationsData) {
+          showNoNotifications();
+          return;
+        }
+        
+        notifications = JSON.parse(notificationsData);
+        
+        if (!Array.isArray(notifications) || notifications.length === 0) {
+          showNoNotifications();
+          return;
+        }
+        
+        displayNotifications();
+        document.getElementById('loading').style.display = 'none';
+        
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+        showNoNotifications();
+      }
+    }
+
+    function displayNotifications() {
+      const notificationsList = document.getElementById('notificationsList');
+      notificationsList.innerHTML = '';
+      
+      // Sort by timestamp (newest first)
+      const sortedNotifications = notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      
+      sortedNotifications.forEach(async (notification, index) => {
+        const notificationItem = await createNotificationItem(notification, index);
+        notificationsList.appendChild(notificationItem);
+      });
+      
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    async function createNotificationItem(notification, index) {
+      const item = document.createElement('div');
+      item.className = `notification-item ${notification.read ? '' : 'unread'}`;
+      
+      // Create avatar container
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'notification-avatar';
+      
+      // Get sender's profile picture
+      let profilePic = '';
+      try {
+        const senderRepo = await findUserRepo(notification.sender);
+        if (senderRepo) {
+          profilePic = await getFileFromRepo(senderRepo, 'profile.jpg').catch(() => null);
+        }
+      } catch (e) {}
+      
+      if (profilePic) {
+        const img = document.createElement('img');
+        img.src = profilePic;
+        img.alt = notification.sender;
+        avatarDiv.appendChild(img);
+      } else {
+        avatarDiv.textContent = notification.sender[0].toUpperCase();
+      }
+      
+      // Format time
+      const timeAgo = getTimeAgo(notification.timestamp);
+      
+      // Create notification content based on type
+      let notificationText = '';
+      let actions = '';
+      
+      if (notification.type === 'friend_request') {
+        notificationText = `<strong>${notification.sender}</strong> sent you a friend request`;
+        actions = `
+          <button class="accept-btn" onclick="acceptFriendRequest(${index})">Accept</button>
+          <button class="reject-btn" onclick="rejectFriendRequest(${index})">Reject</button>
+        `;
+      } else if (notification.type === 'friend_accepted') {
+        notificationText = `<strong>${notification.sender}</strong> accepted your friend request`;
+        actions = `<button class="view-btn" onclick="viewProfile('${notification.sender}')">View Profile</button>`;
+      }
+      
+      // Create content div
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'notification-content';
+      contentDiv.innerHTML = `
+        <div class="notification-type">${notification.type.replace('_', ' ')}</div>
+        <div class="notification-text">${notificationText}</div>
+        <div class="notification-time">${timeAgo}</div>
+      `;
+      
+      // Create actions div
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'notification-actions';
+      actionsDiv.innerHTML = actions;
+      
+      // Assemble the item
+      item.appendChild(avatarDiv);
+      item.appendChild(contentDiv);
+      item.appendChild(actionsDiv);
+      
+      return item;
+    }
+
+    async function acceptFriendRequest(index) {
+      const notification = notifications[index];
+      
+      try {
+        // Add friend to current user's friends list
+        let friends = [];
+        try {
+          const friendsData = await getFile('friends.txt');
+          friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+        } catch (e) {}
+        
+        if (!friends.includes(notification.sender)) {
+          friends.push(notification.sender);
+          await saveFile('friends.txt', friends.join(','));
+        }
+        
+        // Also add current user to the sender's friends list
+        await addUserToFriendsList(notification.sender, currentUser);
+        
+        // Send notification to sender that request was accepted
+        await sendAcceptedNotification(notification.sender);
+        
+        // Mark notification as read and remove
+        notifications.splice(index, 1);
+        await saveNotifications();
+        
+        // Update display
+        displayNotifications();
+        
+        alert(`You are now friends with ${notification.sender}!`);
+        
+      } catch (error) {
+        alert("Failed to accept friend request: " + error.message);
+      }
+    }
+
+    async function addUserToFriendsList(username, friendToAdd) {
+      try {
+        const userRepo = await findUserRepo(username);
+        if (!userRepo) return;
+        
+        let friends = [];
+        try {
+          const friendsData = await getFileFromRepo(userRepo, 'friends.txt');
+          friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+        } catch (e) {}
+        
+        if (!friends.includes(friendToAdd)) {
+          friends.push(friendToAdd);
+          await saveFileToRepo(userRepo, 'friends.txt', friends.join(','));
+        }
+      } catch (error) {
+        console.error("Error adding to friend's list:", error);
+      }
+    }
+
+    async function rejectFriendRequest(index) {
+      const notification = notifications[index];
+      
+      if (!confirm(`Reject friend request from ${notification.sender}?`)) return;
+      
+      try {
+        // Remove this notification
+        notifications.splice(index, 1);
+        await saveNotifications();
+        
+        // Update display
+        displayNotifications();
+        
+        alert(`Friend request from ${notification.sender} rejected.`);
+        
+      } catch (error) {
+        alert("Failed to reject friend request: " + error.message);
+      }
+    }
+
+    async function sendAcceptedNotification(toUsername) {
+      try {
+        const toRepo = await findUserRepo(toUsername);
+        if (!toRepo) return;
+        
+        // Load recipient's notifications
+        let recipientNotifications = [];
+        try {
+          const notificationsData = await getFileFromRepo(toRepo, 'notifications.txt');
+          recipientNotifications = JSON.parse(notificationsData);
+        } catch (e) {
+          // No notifications file yet
+        }
+        
+        // Add accepted notification
+        const acceptedNotification = {
+          type: 'friend_accepted',
+          sender: currentUser,
+          timestamp: new Date().toISOString(),
+          read: false
+        };
+        
+        recipientNotifications.unshift(acceptedNotification);
+        
+        // Save to recipient's repo
+        await saveFileToRepo(toRepo, 'notifications.txt', JSON.stringify(recipientNotifications));
+        
+      } catch (error) {
+        console.error("Error sending accepted notification:", error);
+      }
+    }
+
+    async function viewProfile(username) {
+      const userRepo = await findUserRepo(username);
+      if (userRepo) {
+        localStorage.setItem("viewUser", username);
+        localStorage.setItem("viewRepo", userRepo);
+        window.location.href = "view.html";
+      } else {
+        alert("User not found");
+      }
+    }
+
+    async function clearAllNotifications() {
+      if (!confirm("Clear all notifications?")) return;
+      
+      try {
+        // Mark all notifications as read before clearing
+        notifications.forEach(n => n.read = true);
+        await saveNotifications();
+        
+        notifications = [];
+        await saveNotifications();
+        showNoNotifications();
+        alert("All notifications cleared");
+      } catch (error) {
+        alert("Failed to clear notifications: " + error.message);
+      }
+    }
+
+    function showNoNotifications() {
+      const notificationsList = document.getElementById('notificationsList');
+      notificationsList.innerHTML = `
+        <div class="no-notifications">
+          No notifications yet
+        </div>
+      `;
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    async function saveNotifications() {
+      await saveFile('notifications.txt', JSON.stringify(notifications));
+    }
+
+    // Helper functions
+    async function getFile(filename) {
+      const res = await fetch(`${API}/repos/${OWNER}/${currentRepo}/contents/${filename}`, {
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (!res.ok) throw new Error('File not found');
+      
+      const data = await res.json();
+      return atob(data.content);
+    }
+
+    async function getFileFromRepo(repo, filename) {
+      const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (!res.ok) throw new Error('File not found');
+      
+      const data = await res.json();
+      
+      if (filename.endsWith('.txt')) {
+        return atob(data.content);
+      } else {
+        // For images, return the base64 data URL
+        return `data:image/jpeg;base64,${data.content}`;
+      }
+    }
+
+    async function saveFile(filename, content) {
+      let sha = null;
+      try {
+        await getFile(filename);
+        const res = await fetch(`${API}/repos/${OWNER}/${currentRepo}/contents/${filename}`, {
+          headers: {
+            'Authorization': `token ${TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sha = data.sha;
+        }
+      } catch (e) {
+        // File doesn't exist
+      }
+      
+      const res = await fetch(`${API}/repos/${OWNER}/${currentRepo}/contents/${filename}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Update ${filename}`,
+          content: btoa(content),
+          sha: sha
+        })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to save file');
+      }
+    }
+
+    async function saveFileToRepo(repo, filename, content) {
+      let sha = null;
+      try {
+        await getFileFromRepo(repo, filename);
+        const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+          headers: {
+            'Authorization': `token ${TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sha = data.sha;
+        }
+      } catch (e) {
+        // File doesn't exist
+      }
+      
+      const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Update ${filename}`,
+          content: btoa(content),
+          sha: sha
+        })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to save file');
+      }
+    }
+
+    async function findUserRepo(username) {
+      try {
+        const repos = await api('/user/repos?per_page=100');
+        for (const repo of repos) {
+          if (!/^user\d+$/.test(repo.name)) continue;
+          
+          try {
+            const userData = await getFileFromRepo(repo.name, 'username.txt');
+            if (userData && userData.trim() === username) {
+              return repo.name;
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+      } catch (error) {
+        console.error("Error finding user repo:", error);
+      }
+      return null;
+    }
+
+    async function api(path) {
+      const r = await fetch(API + path, {
+        headers: { Authorization: "token " + TOKEN }
+      });
+      if (!r.ok) throw new Error('API error');
+      return r.json();
+    }
+
+    function getTimeAgo(timestamp) {
+      const now = new Date();
+      const past = new Date(timestamp);
+      const diff = now - past;
+      
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      
+      if (minutes < 1) return "Just now";
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      
+      return past.toLocaleDateString();
+    }
+  </script>
+</body>
+</html>
