@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sharetalk/video/thumbnail/upload</title>
+
+<style>
+body{
+  font-family:system-ui,-apple-system;
+  background:#f0f2f5;
+  padding:20px;
+}
+
+.upload-box{
+  max-width:500px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+
+.choose-btn{
+  display:block;
+  background:#0095f6;
+  color:#fff;
+  padding:10px;
+  text-align:center;
+  border-radius:8px;
+  margin:10px 0;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.file-preview img{
+  max-width:100%;
+  max-height:220px;
+  border-radius:6px;
+}
+
+.file-name{
+  font-size:14px;
+  margin-top:4px;
+  color:#555;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.remove-btn{
+  background:#e74c3c;
+  color:#fff;
+  border:none;
+  padding:2px 6px;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.progress{
+  height:8px;
+  background:#ddd;
+  border-radius:4px;
+  overflow:hidden;
+  margin-top:8px;
+  display:none;
+}
+.ex {
+   border: none;
+    font-weight: 900;
+    height: 10vw;
+    width: 10vw;
+    border-radius: 50%;
+    border: 0.5px solid blue;
+    font-size: 20px;
+    background: #eee;
+  }
+.bar{
+  height:100%;
+  width:0%;
+  background:#00b894;
+}
+
+.submit-btn{
+  width:100%;
+  padding:12px;
+  margin-top:15px;
+  background:#00b894;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="upload-box">
+  <a href="video.html">
+    <button class="ex"><</button>
+  </a><p><br>
+  <label>Thumbnail</label>
+
+  <label class="choose-btn" onclick="imageInput.click()">Choose Thumbnail Image</label>
+  <input type="file" id="imageInput" accept="image/*" hidden>
+
+  <div id="imageName" class="file-name"></div>
+  <div class="file-preview" id="imagePreview"></div>
+
+  <div class="progress">
+    <div id="imageProgress" class="bar"></div>
+  </div>
+
+  <button id="submitBtn" class="submit-btn">
+    Upload
+  </button>
+    <p style="color: black;">Your File must be under 50MB size each
+    otherwise it will not get uploaded. Your thumbnail will display along with the video on the platform within 1 week after your upload.
+  </p>
+</div>
+
+<script>
+const BOT_TOKEN = "8280799580:AAHgfc1uzQD8dvn4wFsP2fd-cR3NH7r4fPI";
+const CHAT_ID = "8340525525";
+
+const imageInput = document.getElementById("imageInput");
+const imageName = document.getElementById("imageName");
+const imagePreview = document.getElementById("imagePreview");
+const submitBtn = document.getElementById("submitBtn");
+const progressBox = document.querySelector(".progress");
+const progressBar = document.getElementById("imageProgress");
+
+let imageFile = null;
+const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+
+function removeImage(){
+  imageFile = null;
+  imageInput.value = "";
+  imageName.innerHTML = "";
+  imagePreview.innerHTML = "";
+  progressBox.style.display = "none";
+  progressBar.style.width = "0%";
+}
+
+imageInput.addEventListener("change", ()=>{
+  const file = imageInput.files[0];
+  if(!file) return;
+
+  if(file.size > MAX_SIZE){
+    alert("File size should not be more than 50 MB");
+    imageInput.value = "";
+    return;
+  }
+
+  imageFile = file;
+
+  imageName.innerHTML = `
+    <span>${file.name}</span>
+    <button class="remove-btn" onclick="removeImage()">Remove</button>
+  `;
+
+  imagePreview.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+});
+
+function sendImage(file){
+  return new Promise((resolve, reject)=>{
+    const formData = new FormData();
+    formData.append("chat_id", CHAT_ID);
+    formData.append("photo", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, true);
+    xhr.timeout = 0;
+
+    xhr.upload.onprogress = e=>{
+      if(e.lengthComputable){
+        progressBox.style.display = "block";
+        progressBar.style.width = ((e.loaded/e.total)*100).toFixed(1)+"%";
+      }
+    };
+
+    xhr.onload = ()=>{
+      const res = JSON.parse(xhr.responseText || "{}");
+      if(xhr.status === 200 && res.ok){
+        resolve();
+      }else{
+        reject(res.description || "Upload failed");
+      }
+    };
+
+    xhr.onerror = ()=>reject("Network error");
+
+    xhr.send(formData);
+  });
+}
+
+submitBtn.addEventListener("click", async ()=>{
+  if(!imageFile){
+    alert("Please select an image");
+    return;
+  }
+
+  // 🔒 FINAL SIZE CHECK (extra safety)
+  if(imageFile.size > MAX_SIZE){
+    alert("File size should not be more than 50 MB");
+    return;
+  }
+
+  submitBtn.innerText = "Uploading...";
+  submitBtn.disabled = true;
+
+  try{
+    await sendImage(imageFile);
+    alert("Image uploaded successfully!");
+    removeImage();
+  }catch(err){
+    alert(err);
+  }
+
+  submitBtn.innerText = "Upload";
+  submitBtn.disabled = false;
+});
+</script>
+
+</body>
+</html>
