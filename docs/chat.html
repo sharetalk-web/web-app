@@ -1,0 +1,55 @@
+<!DOCTYPE html>  
+<html>  
+<head>  
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">  
+  <title>sharetalk/chats</title>  
+  <link rel="stylesheet" href="chat.css"/>  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>  
+<body>  
+  <nav class="head">  
+    <button class="h" onclick="window.location.href = 'home.html'">Home</button>
+    <div class="icon">  
+       <span class="tag">sharetalk chats</span>
+      <button class="tak" onclick="window.location.href='csearch.html';">  
+        &#x2315;  
+      </button>
+      <button id="tal">☰</button>  
+    </div>
+    <br>  
+    <div class="flex-container">  
+      <div class="flex">  
+        <input type="text" id="filter" placeholder="Search Your Trustees...">  
+        <button class="clear">×</button>  
+      </div>
+    </div>
+    <div class="tabs">  
+    </div>  
+  </nav>
+  
+  <main id="friendsContainer">
+    <!-- Trustees will be loaded here -->
+    <div class="loading" id="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading your trustees...</p>
+    </div>
+  </main>
+  
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">Menu</h2>
+      <button class="close-sidebar">&times;</button>
+    </div>
+    <div class="sidebar-content">
+      <button class="sidebar-btn new-group" onclick="alert('Comming Soon');">Group Comment</button>
+      <button class="sidebar-btn" onclick="window.location.href='cfile.html'">Profile</button>
+        <button class="sidebar-btn" onclick="window.location.href = 'cnotify.html'">Notifications</button>
+    </div>
+  </div>
+  <div class="overlay"></div>
+  
+  <script src="chat.js"></script>
+</body>  
+</html>
