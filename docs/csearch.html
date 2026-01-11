@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>sharetalk/search</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body{
+  font-family: system-ui,-apple-system;
+  background: beige;
+  height: auto;
+  padding:14px;
+}
+
+/* Back button */
+.bk{
+  height:12vw;
+  width:12vw;
+  border-radius:50%;
+  background:#25d366;
+  border:none;
+  color:white;
+  font-size:36px;
+  font-weight:900;
+  box-shadow:0 4px 10px rgba(0,0,0,.25);
+}
+.bk:active{transform:scale(.92)}
+
+.sep{
+  border-bottom:4px solid #25d366;
+  border-radius:4px;
+}
+
+/* Search */
+.search-container{
+  display:flex;
+  width:100%;
+  height:14vw;
+  background:white;
+  border-radius:30px;
+  overflow:hidden;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+}
+
+#search{
+  flex:1;
+  border:none;
+  outline:none;
+  padding:0 20px;
+  font-size:26px;
+  font-weight:700;
+  background:transparent;
+}
+
+#search::placeholder{color:#999}
+
+#searchBtn{
+  border:none;
+  padding:0 30px;
+  background:#25d366;
+  color:white;
+  font-size:24px;
+  font-weight:800;
+}
+
+/* Results */
+#results{
+  margin-top:16px;
+}
+
+/* User card */
+.user{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  background:white;
+  padding:14px;
+  border-radius:18px;
+  margin-bottom:12px;
+  cursor:pointer;
+  box-shadow:0 3px 8px rgba(0,0,0,.15);
+  transition:.2s;
+}
+.user:active{transform:scale(.97)}
+
+.user img{
+  width:22vw;
+  height:22vw;
+  border-radius:50%;
+  object-fit:cover;
+  border:4px solid #25d366;
+}
+
+.user span{
+  font-size:50px;
+  font-weight:800;
+  text-transform:capitalize;
+}
+
+/* Default avatar */
+.default-avatar{
+  width:22vw;
+  height:22vw;
+  border-radius:50%;
+  background:#25d366;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:30px;
+  font-weight:900;
+}
+
+/* Friend badge */
+.friend-status{
+  margin-left:auto;
+  padding:6px 14px;
+  background:#e7fbe9;
+  color:#25d366;
+  font-size:14px;
+  font-weight:800;
+  border-radius:20px;
+}
+
+/* Loading */
+.loading{
+  text-align:center;
+  padding:40px;
+  color:#666;
+}
+
+.loading-spinner{
+  width:44px;
+  height:44px;
+  border:4px solid #eee;
+  border-top:4px solid #25d366;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  margin:auto;
+  margin-bottom:12px;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+/* No results */
+.no-results{
+  padding:50px;
+  text-align:center;
+  font-size:18px;
+  color:#777;
+}
+</style>
+</head>
+
+<body>
+
+<a href="chat.html"><button class="bk"><</button></a>
+
+<br><br>
+<div class="sep"></div>
+<br><br>
+
+<div class="search-container">
+  <input id="search" placeholder="Search People...">
+  <button id="searchBtn">Search</button>
+</div>
+
+<div id="results"></div>
+
+<script>
+const API = "https://api.github.com";
+const token = "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";
+const owner = "authorization-tech";
+
+async function api(path){
+  const r = await fetch(API + path,{
+    headers:{Authorization:"token "+token}
+  });
+  if(!r.ok) throw new Error();
+  return r.json();
+}
+
+function base64ToBlob(base64,type){
+  const bytes=atob(base64);
+  const arr=new Uint8Array(bytes.length);
+  for(let i=0;i<bytes.length;i++)arr[i]=bytes.charCodeAt(i);
+  return new Blob([arr],{type});
+}
+
+const imageNames=["profile.jpg","profile.png","profile.jpeg","profile.webp"];
+
+const searchInput=document.getElementById("search");
+const searchBtn=document.getElementById("searchBtn");
+const results=document.getElementById("results");
+
+let currentUser=localStorage.getItem("authUser");
+let currentUserRepo=localStorage.getItem("authRepo");
+
+function showLoading(){
+  results.innerHTML=`<div class="loading">
+    <div class="loading-spinner"></div>
+    Searching users...
+  </div>`;
+}
+
+function showNoResults(){
+  results.innerHTML=`<div class="no-results">No users found</div>`;
+}
+
+async function loadAvatar(repo,name,container){
+  for(const file of imageNames){
+    try{
+      const imgData=await api(`/repos/${owner}/${repo}/contents/${file}`);
+      const blob=base64ToBlob(imgData.content,"image/*");
+      const img=document.createElement("img");
+      img.src=URL.createObjectURL(blob);
+      container.prepend(img);
+      return;
+    }catch{}
+  }
+  const fallback=document.createElement("div");
+  fallback.className="default-avatar";
+  fallback.textContent=name[0].toUpperCase();
+  container.prepend(fallback);
+}
+
+async function checkIfFriend(target){
+  try{
+    const r=await api(`/repos/${owner}/${currentUserRepo}/contents/friends.txt`);
+    return atob(r.content).split(",").includes(target);
+  }catch{return false}
+}
+
+async function getFriendStatus(name){
+  if(currentUser===name)return"You";
+  return await checkIfFriend(name)?"Friend":null;
+}
+
+async function performSearch(){
+  const q=searchInput.value.trim().toLowerCase();
+  if(!q)return;
+  showLoading();
+
+  try{
+    const repos=await api("/user/repos?per_page=100");
+    const users=[];
+    for(const r of repos){
+      if(!/^user\d+$/.test(r.name))continue;
+      try{
+        const u=await api(`/repos/${owner}/${r.name}/contents/username.txt`);
+        const name=atob(u.content).trim();
+        if(name.toLowerCase().includes(q))
+          users.push({repo:r.name,name});
+      }catch{}
+    }
+
+    results.innerHTML="";
+    if(!users.length)return showNoResults();
+
+    for(const u of users){
+      const div=document.createElement("div");
+      div.className="user";
+      div.innerHTML=`<span>${u.name}</span>`;
+      const status=await getFriendStatus(u.name);
+      if(status){
+        const b=document.createElement("div");
+        b.className="friend-status";
+        b.textContent=status;
+        div.appendChild(b);
+      }
+      results.appendChild(div);
+      await loadAvatar(u.repo,u.name,div);
+      div.onclick=()=>{
+        localStorage.setItem("viewUser",u.name);
+        localStorage.setItem("viewRepo",u.repo);
+        location.href="cook.html";
+      }
+    }
+  }catch{
+    results.innerHTML=`<div class="no-results">Error searching users</div>`;
+  }
+}
+
+searchBtn.onclick=performSearch;
+searchInput.oninput=()=>{clearTimeout(window.t);window.t=setTimeout(performSearch,400)};
+searchInput.addEventListener("keypress",e=>e.key==="Enter"&&performSearch());
+
+document.addEventListener("DOMContentLoaded",()=>{
+  if(!currentUser||!currentUserRepo)location.href="index.html";
+});
+</script>
+</body>
+</html>
