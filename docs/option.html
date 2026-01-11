@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sharetalk/upload</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+/* Card */
+.container{
+  background:#fff;
+  padding:30px;
+  border-radius:20px;
+  width:90%;
+  max-width:360px;
+  text-align:center;
+  box-shadow:0 20px 40px rgba(0,0,0,0.2);
+}
+
+h1{
+  margin:0 0 25px;
+  font-size:24px;
+  color:#333;
+}
+
+/* Buttons */
+.option{
+  width:100%;
+  padding:16px;
+  margin:12px 0;
+  border:none;
+  border-radius:14px;
+  font-size:18px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  color:#fff;
+}
+
+/* Individual colors */
+.video{
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+}
+.post{
+  background: linear-gradient(135deg, #36d1dc, #5b86e5);
+}
+.super{
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+  color:#333;
+}
+
+.option:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 25px rgba(0,0,0,0.25);
+}
+
+.option:active{
+  transform:scale(0.97);
+}
+  .ex {
+   border: none;
+    font-weight: 900;
+    height: 10vw;
+    width: 10vw;
+    border-radius: 50%;
+    border: 0.5px solid blue;
+    font-size: 20px;
+    background: #eee;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <a href="home.html">
+    <button class="ex"><</button>
+  </a><p><br>
+  <h1>Create New</h1>
+
+  <button class="option video" id="videoBtn"> Video</button>
+  <button class="option post" id="postBtn">Post</button>
+  <button class="option super" id="superBtn">Super Post</button>
+</div>
+
+<script>
+document.getElementById("videoBtn").addEventListener("click", () => {
+  window.location.href = "video.html";
+});
+  document.getElementById("postBtn").addEventListener("click", () => {
+  window.location.href = "post.html";
+});
+  document.getElementById("superBtn").addEventListener("click", () => {
+  window.location.href = "super.html";
+});
+</script>
+
+</body>
+</html>
