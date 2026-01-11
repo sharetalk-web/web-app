@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sharetalk/video/upload</title>
+<style>
+body{font-family:system-ui,-apple-system;background:#f0f2f5;padding:20px;}
+.upload-box{max-width:500px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.1);}
+.tabs{display:flex;margin-bottom:15px;cursor:pointer;}
+.tab{flex:1;padding:10px;text-align:center;background:#ddd;border-radius:8px 8px 0 0;font-weight:bold;}
+.tab.active{background:#0095f6;color:#fff;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.choose-btn{display:block;background:#0095f6;color:#fff;padding:10px;text-align:center;border-radius:8px;margin:10px 0;cursor:pointer;font-weight:600;}
+.file-preview{margin-top:5px;margin-bottom:10px;}
+.file-preview video{max-width:100%;max-height:200px;border-radius:6px;margin-top:5px;display:block;}
+.file-name{font-size:14px;margin-top:4px;color:#555;display:flex;justify-content:space-between;align-items:center;}
+.remove-btn{background:#e74c3c;color:#fff;border:none;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:12px;margin-left:5px;}
+.submit-btn{width:100%;padding:12px;margin-top:15px;background:#00b894;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;}
+.progress{height:8px;background:#ddd;border-radius:4px;overflow:hidden;margin-top:6px}
+.bar{height:100%;width:0%;background:#00b894;}
+  .ex {
+   border: none;
+    font-weight: 900;
+    height: 10vw;
+    width: 10vw;
+    border-radius: 50%;
+    border: 0.5px solid blue;
+    font-size: 20px;
+    background: #eee;
+  }
+</style>
+</head>
+<body>
+
+<div class="upload-box">
+ <a href="option.html">
+    <button class="ex"><</button>
+  </a><p><br>
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" id="videoTabBtn">Video Upload</div>
+    <div class="tab" id="imageTabBtn">Thumbnail Upload</div>
+  </div>
+
+  <!-- Video Tab -->
+  <div class="tab-content active" id="videoTab">
+    <label>Video</label>
+    <label class="choose-btn" id="chooseVideoBtn">Choose Video</label>
+    <input type="file" id="videoInput" hidden>
+    <div class="file-name" id="videoName"></div>
+    <div class="file-preview" id="videoPreview"></div>
+
+    <textarea id="videoCaption" style="width: 100%;"rows="3" placeholder="Enter caption for video"></textarea>
+
+    <div class="progress"><div id="videoProgress" class="bar"></div></div>
+    <button id="submitVideoBtn" class="submit-btn">Upload Video</button>
+   <p style="color: black;">Your File must be under 2GB size
+    otherwise it will not get uploaded. Your Video will display on the platform within 1 week after your upload. If you want You can set the thumbnail optional.
+  </p>
+  </div>
+
+  <!-- Image Tab -->
+  <div class="tab-content" id="imageTab">
+    <label>Image</label>
+    <label class="choose-btn" id="chooseImageBtn">Choose Image</label>
+    <input type="file" id="imageInput" accept="image/*" hidden>
+    <div class="file-name" id="imageName"></div>
+    <div class="file-preview" id="imagePreview"></div>
+
+    <label>Image Caption (Optional)</label>
+    <textarea id="imageCaption" rows="2" placeholder="Enter caption for image"></textarea>
+
+    <button id="submitImageBtn" class="submit-btn">Upload Thumbnail</button>
+   <p style="color: black;">Your File be under 2GB size each
+    otherwise it will not get uploaded. Your Super Post will display on the platform within 1 week after your upload.
+  </p>
+  </div>
+</div>
+
+<script>
+const BOT_TOKEN = "8280799580:AAHgfc1uzQD8dvn4wFsP2fd-cR3NH7r4fPI";
+const CHAT_ID = "8340525525";
+
+// Tabs
+const videoTabBtn = document.getElementById("videoTabBtn");
+const imageTabBtn = document.getElementById("imageTabBtn");
+const videoTab = document.getElementById("videoTab");
+const imageTab = document.getElementById("imageTab");
+
+let uploading = false;
+
+videoTabBtn.onclick = () => {
+  if(uploading) return;
+  videoTabBtn.classList.add("active");
+  imageTabBtn.classList.remove("active");
+  videoTab.classList.add("active");
+  imageTab.classList.remove("active");
+}
+imageTabBtn.onclick = () => {
+  if(uploading) return;
+  // Navigate to image upload page
+  window.location.href = "thumbnail.html";
+}
+
+// Video elements
+const chooseVideoBtn = document.getElementById("chooseVideoBtn");
+const videoInput = document.getElementById("videoInput");
+const videoNameDiv = document.getElementById("videoName");
+const videoPreviewDiv = document.getElementById("videoPreview");
+const videoProgress = document.getElementById("videoProgress");
+const submitVideoBtn = document.getElementById("submitVideoBtn");
+const videoCaption = document.getElementById("videoCaption");
+
+let videoFile = null;
+
+// Preview helper
+function previewVideo(file){
+  videoPreviewDiv.innerHTML="";
+  const vid = document.createElement("video");
+  vid.src = URL.createObjectURL(file);
+  vid.controls = true;
+  videoPreviewDiv.appendChild(vid);
+}
+
+// Remove helper
+function removeVideo(){
+  videoFile=null;
+  videoInput.value="";
+  videoNameDiv.innerHTML="";
+  videoPreviewDiv.innerHTML="";
+  videoProgress.style.width="0%";
+}
+
+// Video selection
+chooseVideoBtn.onclick = () => videoInput.click();
+videoInput.addEventListener("change", ()=>{
+  const file = videoInput.files[0];
+  if(!file) return;
+
+  if(!file.type.startsWith("video/")){
+    alert("Please select a valid video file!");
+    videoInput.value="";
+    return;
+  }
+
+  if(file.size > 2*1024*1024*1024){
+    alert("Video exceeds 2GB limit!");
+    videoInput.value="";
+    return;
+  }
+
+  videoFile = file;
+  videoNameDiv.innerHTML = "";
+  previewVideo(file);
+
+  const removeBtn = document.createElement("button");
+  removeBtn.className="remove-btn";
+  removeBtn.innerText="×";
+  removeBtn.onclick = removeVideo;
+  videoNameDiv.appendChild(removeBtn);
+});
+
+// Upload function
+async function sendVideo(file, caption){
+  const formData = new FormData();
+  formData.append("chat_id",CHAT_ID);
+  formData.append("video",file);
+  if(caption) formData.append("caption",caption);
+
+  return new Promise((resolve,reject)=>{
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST",`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`,true);
+    xhr.timeout=0;
+    xhr.upload.onprogress=(e)=>{
+      if(e.lengthComputable){
+        const percent=(e.loaded/e.total)*100;
+        videoProgress.style.width=percent+"%";
+      }
+    }
+    xhr.onload = ()=>xhr.status>=200&&xhr.status<300?resolve(xhr.response):reject(xhr.response);
+    xhr.onerror=()=>reject("Network error");
+    xhr.send(formData);
+  });
+}
+
+// Submit Video
+submitVideoBtn.onclick = async ()=>{
+  if(!videoFile){ alert("Select a video."); return; }
+  if(!videoCaption.value.trim()){ alert("Enter caption."); return; }
+
+  uploading=true;
+  submitVideoBtn.innerText="Uploading...";
+  submitVideoBtn.disabled=true;
+
+  try{
+    await sendVideo(videoFile, videoCaption.value.trim());
+    alert("Video uploaded successfully!");
+    removeVideo();
+    videoCaption.value="";
+  }catch(e){
+    alert("Upload failed: "+e);
+  }
+
+  submitVideoBtn.innerText="Upload Video";
+  submitVideoBtn.disabled=false;
+  uploading=false;
+}
+</script>
+</body>
+</html>
