@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sharetalk/profile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            border-bottom: 2px solid #25d366;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #1da851;
+        }
+
+        .title {
+            color: #25d366;
+            font-size: 28px;
+            font-weight: 900;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .avatar-container {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #25d366;
+        }
+
+        .avatar-default {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #25d366;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 60px;
+            font-weight: 900;
+            border: 5px solid #25d366;
+        }
+
+        .username {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .user-id {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #e8f5e9;
+            color: #25d366;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .info-section {
+            margin-top: 30px;
+        }
+
+        .info-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #25d366;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #25d366;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            border: 2px solid #25d366;
+            background: white;
+            color: #25d366;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: #25d366;
+            color: white;
+        }
+
+        .logout-btn {
+            background: #ff4444;
+            border-color: #ff4444;
+            color: white;
+        }
+
+        .logout-btn:hover {
+            background: #e53935;
+            border-color: #e53935;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f0f0f0;
+            border-top: 5px solid #25d366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #ff4444;
+        }
+
+        .error-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .retry-btn {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .profile-card {
+                padding: 20px;
+            }
+            
+            .avatar-container {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .username {
+                font-size: 24px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">sharetalk profile</h1>
+            <button class="back-btn" onclick="window.location.href='chat.html'">
+                ← Back to Chats
+            </button>
+        </div>
+
+        <div id="profileContent">
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading profile...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API = "https://api.github.com";
+        const TOKEN = "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";
+        const OWNER = "authorization-tech";
+
+        // Get current user from localStorage
+        const currentUser = localStorage.getItem("authUser");
+        const currentUserRepo = localStorage.getItem("authRepo");
+
+        // Check authentication
+        if (!currentUser || !currentUserRepo) {
+            window.location.href = "cauth.html";
+        }
+
+        // DOM Elements
+        const profileContent = document.getElementById('profileContent');
+        const loadingElement = document.getElementById('loading');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log("Loading profile for user:", currentUser);
+            console.log("User repo:", currentUserRepo);
+            
+            await loadProfile();
+        });
+
+        // API wrapper
+        async function api(path, method = "GET", body) {
+            const headers = {
+                Authorization: "token " + TOKEN,
+                Accept: "application/vnd.github+json"
+            };
+            
+            if (body && method !== "GET") {
+                headers["Content-Type"] = "application/json";
+            }
+
+            console.log(`API ${method}: ${path}`);
+            
+            try {
+                const res = await fetch(API + path, {
+                    method,
+                    headers,
+                    body: body ? JSON.stringify(body) : null
+                });
+
+                if (!res.ok) {
+                    console.error(`API Error ${res.status}: ${path}`);
+                    throw new Error(`API Error: ${res.status}`);
+                }
+                return res.json();
+            } catch (error) {
+                console.error(`API fetch error: ${path}`, error);
+                throw error;
+            }
+        }
+
+        // Load user profile
+        async function loadProfile() {
+            try {
+                loadingElement.style.display = 'block';
+                
+                // Get user display name
+                let displayName = currentUser;
+                try {
+                    const userRes = await api(`/repos/${OWNER}/${currentUserRepo}/contents/username.txt`);
+                    if (userRes && userRes.content) {
+                        displayName = atob(userRes.content).trim();
+                        console.log("Display name:", displayName);
+                    }
+                } catch (e) {
+                    console.log("Could not get display name:", e.message);
+                }
+
+                // Get user status
+                let lastSeen = "Unknown";
+                let status = "offline";
+                try {
+                    const statusRes = await api(`/repos/${OWNER}/${currentUserRepo}/contents/status.json`);
+                    if (statusRes && statusRes.content) {
+                        const statusData = JSON.parse(atob(statusRes.content));
+                        lastSeen = formatDate(statusData.lastSeen);
+                        const lastSeenDate = new Date(statusData.lastSeen);
+                        const now = new Date();
+                        const diffMinutes = (now - lastSeenDate) / (1000 * 60);
+                        status = diffMinutes < 5 ? "online" : "offline";
+                    }
+                } catch (e) {
+                    console.log("No status data:", e.message);
+                }
+
+                // Get friends count
+                let friendsCount = 0;
+                try {
+                    const friendsRes = await api(`/repos/${OWNER}/${currentUserRepo}/contents/friends.txt`);
+                    if (friendsRes && friendsRes.content) {
+                        const friendsContent = atob(friendsRes.content);
+                        const friends = friendsContent.split(',')
+                            .map(f => f.trim())
+                            .filter(f => f && f !== 'undefined' && f !== 'null' && f !== '');
+                        friendsCount = friends.length;
+                    }
+                } catch (e) {
+                    console.log("No friends file:", e.message);
+                }
+
+                // Create profile HTML
+                profileContent.innerHTML = `
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <div class="avatar-container" id="avatarContainer">
+                                <div class="avatar-default">${displayName ? displayName[0].toUpperCase() : '?'}</div>
+                            </div>
+                            <h1 class="username">${displayName}</h1>
+                            <p class="user-id">@${currentUser}</p>
+                            <span class="status" id="userStatus">${status === "online" ? "🟢 Online" : "⚫ Last seen: " + lastSeen}</span>
+                        </div>
+
+                        <div class="info-section">
+                            <h2 class="info-title">Profile Information</h2>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-label">Username</div>
+                                    <div class="info-value">${currentUser}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Display Name</div>
+                                    <div class="info-value">${displayName}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Repository</div>
+                                    <div class="info-value">${currentUserRepo}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Account Created</div>
+                                    <div class="info-value" id="accountCreated">Loading...</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Trustees</div>
+                                    <div class="info-value">${friendsCount} friends</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Status</div>
+                                    <div class="info-value" id="statusText">${status}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="actions">
+                               <button class="action-btn logout-btn" onclick="logout()">Logout</button>
+                        </div>
+                    </div>
+                `;
+
+                // Load avatar
+                await loadAvatar();
+
+                // Load repo creation date
+                await loadRepoInfo();
+
+                loadingElement.style.display = 'none';
+
+            } catch (error) {
+                console.error("Error loading profile:", error);
+                showError();
+            }
+        }
+
+        // Load user avatar
+        async function loadAvatar() {
+            try {
+                console.log("Loading avatar...");
+                const avatarContainer = document.getElementById('avatarContainer');
+                if (!avatarContainer) return;
+
+                const imageNames = ["profile.jpg", "profile.png", "avatar.jpg", "avatar.png", "user.jpg", "profile.jpeg"];
+                
+                for (const file of imageNames) {
+                    try {
+                        const imgData = await api(`/repos/${OWNER}/${currentUserRepo}/contents/${file}`);
+                        if (imgData && imgData.content) {
+                            const ext = file.split('.').pop().toLowerCase();
+                            const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+                            
+                            const img = document.createElement('img');
+                            img.className = 'avatar-img';
+                            img.src = `data:${mime};base64,${imgData.content}`;
+                            img.onload = () => {
+                                console.log("Avatar loaded successfully");
+                                avatarContainer.innerHTML = '';
+                                avatarContainer.appendChild(img);
+                            };
+                            img.onerror = () => {
+                                console.log(`Failed to load image ${file}`);
+                            };
+                            return;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                
+                // Try profile.json
+                try {
+                    const profileData = await api(`/repos/${OWNER}/${currentUserRepo}/contents/profile.json`);
+                    if (profileData && profileData.content) {
+                        const profile = JSON.parse(atob(profileData.content));
+                        if (profile.avatarData) {
+                            const img = document.createElement('img');
+                            img.className = 'avatar-img';
+                            img.src = `data:image/jpeg;base64,${profile.avatarData}`;
+                            img.onload = () => {
+                                console.log("Avatar loaded from profile.json");
+                                avatarContainer.innerHTML = '';
+                                avatarContainer.appendChild(img);
+                            };
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.log("No profile.json found:", e.message);
+                }
+                
+                console.log("Using default avatar");
+                
+            } catch (e) {
+                console.error("Error loading avatar:", e);
+            }
+        }
+
+        // Load repository info
+        async function loadRepoInfo() {
+            try {
+                const repoInfo = await api(`/repos/${OWNER}/${currentUserRepo}`);
+                if (repoInfo && repoInfo.created_at) {
+                    const createdDate = formatDate(repoInfo.created_at);
+                    document.getElementById('accountCreated').textContent = createdDate;
+                }
+            } catch (e) {
+                console.log("Could not load repo info:", e.message);
+                document.getElementById('accountCreated').textContent = "Unknown";
+            }
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return "Unknown";
+                
+                const now = new Date();
+                const diffMs = now - date;
+                const diffDays = Math.floor(diffMs / 86400000);
+                
+                if (diffDays === 0) return "Today";
+                if (diffDays === 1) return "Yesterday";
+                if (diffDays < 7) return `${diffDays} days ago`;
+                if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+                
+                return date.toLocaleDateString([], {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } catch (e) {
+                return "Unknown";
+            }
+        }
+
+        // Show error message
+        function showError() {
+            profileContent.innerHTML = `
+                <div class="error">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Error Loading Profile</h3>
+                    <p>Could not load your profile. Please try again.</p>
+                    <button class="retry-btn" onclick="loadProfile()">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+
+        // Edit profile function
+        function editProfile() {
+            const newName = prompt("Enter your new display name:", document.querySelector('.username').textContent);
+            if (newName && newName.trim()) {
+                updateDisplayName(newName.trim());
+            }
+        }
+
+        // Update display name
+        async function updateDisplayName(newName) {
+            try {
+                await api(`/repos/${OWNER}/${currentUserRepo}/contents/username.txt`, "PUT", {
+                    message: "Update display name",
+                    content: btoa(newName),
+                    sha: await getFileSha('username.txt')
+                });
+                
+                alert("Display name updated successfully!");
+                loadProfile(); // Refresh profile
+            } catch (error) {
+                console.error("Error updating display name:", error);
+                alert("Error updating display name. Please try again.");
+            }
+        }
+
+        // Get file SHA for updating
+        async function getFileSha(filename) {
+            try {
+                const fileRes = await api(`/repos/${OWNER}/${currentUserRepo}/contents/${filename}`);
+                return fileRes.sha;
+            } catch (e) {
+                return null; // File doesn't exist yet
+            }
+        }
+
+        // Change avatar function
+        function changeAvatar() {
+            alert("Avatar upload feature coming soon!\nFor now, you can manually upload a profile.jpg file to your repository.");
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem("authUser");
+                localStorage.removeItem("authRepo");
+                localStorage.removeItem("chatFriend");
+                localStorage.removeItem("chatDate");
+                localStorage.removeItem("chatRepo");
+                window.location.href = "cauth.html";
+            }
+        }
+
+        // Make functions available globally
+        window.loadProfile = loadProfile;
+        window.editProfile = editProfile;
+        window.changeAvatar = changeAvatar;
+        window.logout = logout;
+
+        console.log("Profile page initialization complete");
+    </script>
+</body>
+</html>
