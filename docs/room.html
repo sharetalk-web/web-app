@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="room.css">
+</head>
+<body>
+    <!-- Chat Header -->
+    <div class="chat-header">
+        <button class="back-btn" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="user-info">
+            <div class="user-name" id="friendName">Loading...</div>
+            <div class="user-status" id="friendStatus">
+                <span class="online-dot"></span>
+                <span>Online</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="toggleInfo()">
+                <i class="fas fa-info-circle"></i>
+            </button>
+            <button class="header-btn" onclick="clearChat()">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="messages-container" id="messagesContainer">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading messages...</p>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-container">
+        <input type="text" class="message-input" id="messageInput" placeholder="Type a message..." autocomplete="off">
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+
+    <!-- Scroll to Bottom Button -->
+    <div class="scroll-bottom" id="scrollBottom" onclick="scrollToBottom()">
+        <i class="fas fa-arrow-down"></i>
+    </div>
+
+    <script src="room.js"></script>
+</body>
+</html>
