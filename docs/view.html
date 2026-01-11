@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sharetalk/profile</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:#f0f2f5}
+    .header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:white;border-bottom:1px solid #ddd;position:fixed;top:0;width:100%;z-index:100}
+    .header-buttons{display:flex;gap:10px}
+    .header-btn{padding:8px 15px;background:#1877F2;color:white;border:none;border-radius:5px;cursor:pointer;font-size:14px}
+    .header-btn:hover{background:#166fe5}
+    .friend-btn{padding:8px 15px;background:#42b72a;color:white;border:none;border-radius:5px;cursor:pointer;font-size:14px}
+    .friend-btn:hover{background:#36a420}
+    .remove-btn{background:#ff4444}
+    .remove-btn:hover{background:#cc0000}
+    .main-content{margin-top:60px}
+    .cover-section{height:250px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);position:relative}
+    .cover-photo{width:100%;height:100%;object-fit:cover}
+    .profile-info{padding:20px;background:white;margin-top:-50px;position:relative}
+    .profile-pic-section{display:flex;align-items:flex-end;gap:20px;margin-bottom:20px;}
+    .profile-pic{width:120px;height:120px;border-radius:50%;border:3px solid #007bff;background:#1877F2;display:flex;align-items:center;justify-content:center;color:white;font-size:40px;font-weight:bold}
+    .profile-pic img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+    .profile-name h2{font-size:24px;margin-bottom:5px}
+    .profile-name p{color:#666;font-size:14px}
+    .action-buttons{display:flex;gap:10px;margin-top:15px}
+    .profile-details{padding:20px;background:white;margin-top:10px}
+    .detail-item{padding:10px 0;border-bottom:1px solid #eee}
+    .detail-item:last-child{border-bottom:none}
+    .detail-label{font-weight:bold;color:#333;margin-bottom:5px}
+    .detail-value{color:#666}
+    .loading{text-align:center;padding:40px;color:#666}
+    .friends-section{margin-top:20px;padding:20px;background:white;border-radius:8px}
+    .friends-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+    .friends-header h3{font-size:18px;color:#333}
+    .friends-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:15px}
+    .friend-item{text-align:center;cursor:pointer}
+    .friend-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 8px;background:#1877F2;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold;overflow:hidden; border: 2px solid #007bff;}
+    .friend-avatar img{width:100%;height:100%;object-fit:cover}
+    .friend-name{font-size:14px;color:#333;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .friend-action{font-size:12px;color:#1877F2;margin-top:5px;cursor:pointer}
+    .friend-action:hover{text-decoration:underline}
+    .no-friends{text-align:center;padding:20px;color:#666}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="font-weight: 900;">Profile</h1>
+    <div class="header-buttons">
+      <button class="header-btn" onclick="goHome()">Home</button>
+      <button class="header-btn" onclick="goBack()">Back</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="cover-section">
+      <div id="defaultCover"></div>
+      <img id="coverPhoto" class="cover-photo" style="display:none">
+    </div>
+
+    <div class="profile-info">
+      <div class="profile-pic-section">
+        <div class="profile-pic">
+          <div id="noPic">N</div>
+          <img id="profilePic" style="display:none">
+        </div>
+        <div class="profile-name">
+          <h2 id="username">Loading...</h2>
+          <p id="bio">No bio yet</p>
+          <div class="action-buttons" id="actionButtons"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-details">
+      <div class="detail-item">
+        <div class="detail-label">Location</div>
+        <div class="detail-value" id="location">Not set</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">About</div>
+        <div class="detail-value" id="about">Not set</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Joined</div>
+        <div class="detail-value" id="joined">Loading...</div>
+      </div>
+    </div>
+
+    <div class="friends-section" id="friendsSection" style="display:none">
+      <div class="friends-header">
+        <h3>Friends</h3>
+        <span id="friendsCount">0 friends</span>
+      </div>
+      <div class="friends-grid" id="friendsGrid"></div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">Loading profile...</div>
+
+  <script>
+    const TOKEN = "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";
+    const API = "https://api.github.com";
+    const OWNER = "authorization-tech";
+    
+    let viewUser = null;
+    let viewRepo = null;
+    let currentUser = null;
+    let currentUserRepo = null;
+    let isFriend = false;
+    let friendsList = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      viewUser = localStorage.getItem("viewUser");
+      viewRepo = localStorage.getItem("viewRepo");
+      currentUser = localStorage.getItem("authUser");
+      currentUserRepo = localStorage.getItem("authRepo");
+      
+      if (!viewUser || !viewRepo) {
+        alert("No user selected. Please search for a user first.");
+        window.location.href = "search.html";
+        return;
+      }
+      
+      if (!currentUser || !currentUserRepo) {
+        alert("Please login first");
+        window.location.href = "index.html";
+        return;
+      }
+      
+      loadProfile();
+    });
+
+    function goHome() {
+      window.location.href = "home.html";
+    }
+
+    function goBack() {
+      window.history.back();
+    }
+
+    async function loadProfile() {
+      try {
+        document.getElementById('username').textContent = viewUser;
+        await Promise.all([
+          loadData(),
+          checkFriendship(),
+          loadFriendsList()
+        ]);
+        document.getElementById('loading').style.display = 'none';
+      } catch (error) {
+        alert("Failed to load profile");
+        console.error(error);
+      }
+    }
+
+    async function loadData() {
+      try {
+        const [bio, location, about] = await Promise.allSettled([
+          getFile(viewRepo, 'bio.txt'),
+          getFile(viewRepo, 'location.txt'),
+          getFile(viewRepo, 'about.txt')
+        ]);
+        
+        if (bio.status === 'fulfilled' && bio.value) {
+          document.getElementById('bio').textContent = bio.value;
+        }
+        
+        if (location.status === 'fulfilled' && location.value) {
+          document.getElementById('location').textContent = location.value;
+        }
+        
+        if (about.status === 'fulfilled' && about.value) {
+          document.getElementById('about').textContent = about.value;
+        }
+        
+        // Load profile picture
+        try {
+          const pic = await getFile(viewRepo, 'profile.jpg');
+          if (pic) {
+            document.getElementById('profilePic').src = pic;
+            document.getElementById('profilePic').style.display = 'block';
+            document.getElementById('noPic').style.display = 'none';
+          }
+        } catch (e) {
+          console.log("No profile picture found");
+        }
+        
+        // Load cover photo
+        try {
+          const cover = await getFile(viewRepo, 'cover.jpg');
+          if (cover) {
+            document.getElementById('coverPhoto').src = cover;
+            document.getElementById('coverPhoto').style.display = 'block';
+            document.getElementById('defaultCover').style.display = 'none';
+          }
+        } catch (e) {
+          console.log("No cover photo found");
+        }
+        
+        // Get join date
+        try {
+          const repo = await fetchRepo(viewRepo);
+          if (repo.created_at) {
+            const date = new Date(repo.created_at);
+            document.getElementById('joined').textContent = date.toLocaleDateString();
+          }
+        } catch (e) {
+          console.log("Could not get join date");
+        }
+        
+      } catch (error) {
+        console.error("Load error:", error);
+      }
+    }
+
+    // Check if current user is friend with viewed user
+    async function checkFriendship() {
+      try {
+        // Get current user's friends list
+        const friendsData = await getFile(currentUserRepo, 'friends.txt').catch(() => null);
+        if (friendsData) {
+          const friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+          isFriend = friends.includes(viewUser);
+        }
+        
+        // Update friend button
+        updateFriendButton();
+      } catch (error) {
+        console.error("Error checking friendship:", error);
+      }
+    }
+
+    function updateFriendButton() {
+      const actionButtons = document.getElementById('actionButtons');
+      actionButtons.innerHTML = '';
+      
+      if (currentUser === viewUser) {
+        // Can't friend yourself
+        return;
+      }
+      
+      const button = document.createElement('button');
+      button.className = isFriend ? 'header-btn remove-btn' : 'friend-btn';
+      button.textContent = isFriend ? 'Remove Friend' : 'Add Friend';
+      button.onclick = isFriend ? removeFriend : addFriend;
+      
+      actionButtons.appendChild(button);
+    }
+
+    async function addFriend() {
+      try {
+        // Get current friends list
+        let friends = [];
+        try {
+          const friendsData = await getFile(currentUserRepo, 'friends.txt');
+          friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+        } catch (e) {
+          // No friends file yet
+        }
+        
+        // Add new friend if not already in list
+        if (!friends.includes(viewUser)) {
+          friends.push(viewUser);
+          
+          // Save updated friends list
+          await saveFile(currentUserRepo, 'friends.txt', friends.join(','));
+          
+          // Send friend request notification
+          await sendFriendRequestNotification();
+          
+          isFriend = true;
+          updateFriendButton();
+          alert(`Friend request sent to ${viewUser}!`);
+          
+          // Reload friends list to show updated count
+          await loadFriendsList();
+        }
+      } catch (error) {
+        alert("Failed to add friend: " + error.message);
+      }
+    }
+
+    async function sendFriendRequestNotification() {
+      try {
+        // Load recipient's notifications
+        let recipientNotifications = [];
+        try {
+          const notificationsData = await getFileFromRepo(viewRepo, 'notifications.txt');
+          recipientNotifications = JSON.parse(notificationsData);
+        } catch (e) {
+          // No notifications file yet
+        }
+        
+        // Create friend request notification
+        const notification = {
+          type: 'friend_request',
+          sender: currentUser,
+          timestamp: new Date().toISOString(),
+          read: false
+        };
+        
+        // Add to beginning of notifications array
+        recipientNotifications.unshift(notification);
+        
+        // Save to recipient's repo
+        await saveFileToRepo(viewRepo, 'notifications.txt', JSON.stringify(recipientNotifications));
+        
+      } catch (error) {
+        console.error("Error sending notification:", error);
+      }
+    }
+
+    async function removeFriend() {
+      if (!confirm(`Remove ${viewUser} from your friends?`)) return;
+      
+      try {
+        // Get current friends list
+        const friendsData = await getFile(currentUserRepo, 'friends.txt');
+        let friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+        
+        // Remove friend
+        friends = friends.filter(f => f !== viewUser);
+        
+        // Save updated friends list
+        await saveFile(currentUserRepo, 'friends.txt', friends.join(','));
+        
+        isFriend = false;
+        updateFriendButton();
+        alert(`Removed ${viewUser} from friends.`);
+        
+        // Reload friends list
+        await loadFriendsList();
+      } catch (error) {
+        alert("Failed to remove friend: " + error.message);
+      }
+    }
+
+    // Load viewed user's friends list
+    async function loadFriendsList() {
+      try {
+        const friendsData = await getFile(viewRepo, 'friends.txt').catch(() => null);
+        if (!friendsData) {
+          document.getElementById('friendsSection').style.display = 'none';
+          return;
+        }
+        
+        const friendUsernames = friendsData.split(',').map(f => f.trim()).filter(f => f);
+        friendsList = friendUsernames;
+        
+        // Update friends count
+        document.getElementById('friendsCount').textContent = `${friendUsernames.length} friends`;
+        
+        // Get current user's friends for comparison
+        const myFriendsData = await getFile(currentUserRepo, 'friends.txt').catch(() => '');
+        const myFriends = myFriendsData.split(',').map(f => f.trim()).filter(f => f);
+        
+        // Display friends
+        const friendsGrid = document.getElementById('friendsGrid');
+        friendsGrid.innerHTML = '';
+        
+        if (friendUsernames.length === 0) {
+          friendsGrid.innerHTML = '<div class="no-friends">No friends yet</div>';
+        } else {
+          // Load first 9 friends for display
+          const displayFriends = friendUsernames.slice(0, 9);
+          
+          for (const friendUsername of displayFriends) {
+            await displayFriendItem(friendUsername, myFriends.includes(friendUsername));
+          }
+        }
+        
+        document.getElementById('friendsSection').style.display = 'block';
+      } catch (error) {
+        console.error("Error loading friends list:", error);
+      }
+    }
+
+    async function displayFriendItem(friendUsername, isMyFriend) {
+      // Find friend's repo
+      const friendRepo = await findUserRepo(friendUsername);
+      if (!friendRepo) return;
+      
+      const friendItem = document.createElement('div');
+      friendItem.className = 'friend-item';
+      
+      // Get friend's profile pic
+      let profilePic = '';
+      try {
+        profilePic = await getFileFromRepo(friendRepo, 'profile.jpg');
+      } catch (e) {
+        // No profile pic
+      }
+      
+      // Create avatar
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'friend-avatar';
+      if (profilePic) {
+        const img = document.createElement('img');
+        img.src = profilePic;
+        img.alt = friendUsername;
+        avatarDiv.appendChild(img);
+      } else {
+        avatarDiv.textContent = friendUsername[0].toUpperCase();
+      }
+      
+      // Create name
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'friend-name';
+      nameDiv.textContent = friendUsername;
+      
+      // Create action button (only if not current user and not already friend)
+      let actionDiv = null;
+      if (friendUsername !== currentUser && !isMyFriend) {
+        actionDiv = document.createElement('div');
+        actionDiv.className = 'friend-action';
+        actionDiv.textContent = 'Add Friend';
+        actionDiv.onclick = (e) => {
+          e.stopPropagation();
+          addFriendFromList(friendUsername);
+        };
+      }
+      
+      // Assemble the item
+      friendItem.appendChild(avatarDiv);
+      friendItem.appendChild(nameDiv);
+      if (actionDiv) {
+        friendItem.appendChild(actionDiv);
+      }
+      
+      // Click to view friend's profile
+      friendItem.onclick = () => {
+        localStorage.setItem("viewUser", friendUsername);
+        localStorage.setItem("viewRepo", friendRepo);
+        window.location.reload();
+      };
+      
+      document.getElementById('friendsGrid').appendChild(friendItem);
+    }
+
+    async function addFriendFromList(friendUsername) {
+      try {
+        // Get current friends list
+        let friends = [];
+        try {
+          const friendsData = await getFile(currentUserRepo, 'friends.txt');
+          friends = friendsData.split(',').map(f => f.trim()).filter(f => f);
+        } catch (e) {
+          // No friends file yet
+        }
+        
+        // Add new friend if not already in list
+        if (!friends.includes(friendUsername)) {
+          friends.push(friendUsername);
+          
+          // Save updated friends list
+          await saveFile(currentUserRepo, 'friends.txt', friends.join(','));
+          
+          // Send notification
+          const friendRepo = await findUserRepo(friendUsername);
+          if (friendRepo) {
+            await sendFriendRequestNotificationToList(friendRepo, friendUsername);
+          }
+          
+          alert(`Friend request sent to ${friendUsername}!`);
+          
+          // Reload friends list to show updated status
+          await loadFriendsList();
+        }
+      } catch (error) {
+        alert("Failed to add friend: " + error.message);
+      }
+    }
+
+    async function sendFriendRequestNotificationToList(repo, username) {
+      try {
+        // Load recipient's notifications
+        let recipientNotifications = [];
+        try {
+          const notificationsData = await getFileFromRepo(repo, 'notifications.txt');
+          recipientNotifications = JSON.parse(notificationsData);
+        } catch (e) {
+          // No notifications file yet
+        }
+        
+        // Create friend request notification
+        const notification = {
+          type: 'friend_request',
+          sender: currentUser,
+          timestamp: new Date().toISOString(),
+          read: false
+        };
+        
+        // Add to beginning of notifications array
+        recipientNotifications.unshift(notification);
+        
+        // Save to recipient's repo
+        await saveFileToRepo(repo, 'notifications.txt', JSON.stringify(recipientNotifications));
+        
+      } catch (error) {
+        console.error("Error sending notification:", error);
+      }
+    }
+
+    async function findUserRepo(username) {
+      try {
+        const repos = await api('/user/repos?per_page=100');
+        for (const repo of repos) {
+          if (!/^user\d+$/.test(repo.name)) continue;
+          
+          try {
+            const userData = await getFileFromRepo(repo.name, 'username.txt');
+            if (userData.trim() === username) {
+              return repo.name;
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+        return null;
+      } catch (error) {
+        console.error("Error finding user repo:", error);
+        return null;
+      }
+    }
+
+    async function getFile(repo, filename) {
+      const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (!res.ok) throw new Error('File not found');
+      
+      const data = await res.json();
+      
+      if (filename.endsWith('.txt')) {
+        return atob(data.content);
+      } else {
+        return `data:image/jpeg;base64,${data.content}`;
+      }
+    }
+
+    async function getFileFromRepo(repo, filename) {
+      const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (!res.ok) throw new Error('File not found');
+      
+      const data = await res.json();
+      
+      if (filename.endsWith('.txt')) {
+        return atob(data.content);
+      } else {
+        return `data:image/jpeg;base64,${data.content}`;
+      }
+    }
+
+    async function saveFile(repo, filename, content) {
+      // Get SHA if file exists
+      let sha = null;
+      try {
+        await getFile(repo, filename);
+        const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+          headers: {
+            'Authorization': `token ${TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sha = data.sha;
+        }
+      } catch (e) {
+        // File doesn't exist
+      }
+      
+      // Save file
+      const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Update ${filename}`,
+          content: btoa(content),
+          sha: sha
+        })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+    }
+
+    async function saveFileToRepo(repo, filename, content) {
+      let sha = null;
+      try {
+        await getFileFromRepo(repo, filename);
+        const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+          headers: {
+            'Authorization': `token ${TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sha = data.sha;
+        }
+      } catch (e) {}
+      
+      const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${filename}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Update ${filename}`,
+          content: btoa(content),
+          sha: sha
+        })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+    }
+
+    async function fetchRepo(repoName) {
+      const res = await fetch(`${API}/repos/${OWNER}/${repoName}`, {
+        headers: {
+          'Authorization': `token ${TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      return res.json();
+    }
+
+    async function api(path) {
+      const r = await fetch(API + path, {
+        headers: { Authorization: "token " + TOKEN }
+      });
+      if (!r.ok) throw new Error();
+      return r.json();
+    }
+  </script>
+</body>
+</html>
